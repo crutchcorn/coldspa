@@ -38,6 +38,7 @@
     "files": [
         "coldspa/**/*.js",
         "docs/**",
+        "media/**",
         "README.md",
         "LICENSE"
     ],

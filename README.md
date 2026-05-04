@@ -1,6 +1,22 @@
-# Coldspa
+<div align="center">
+<h1>Coldspa</h1>
 
-Give your CFML a spa day. The Islands Architecture for ColdFusion. Mount Vue or React components into CFML pages with server-side rendering and progressive hydration.
+<a href="https://emojipedia.org/joypixels/2.0/bathtub">
+  <img
+    height="80"
+    width="80"
+    alt="bathtub"
+    src="https://raw.githubusercontent.com/crutchcorn/coldspa/refs/heads/main/media/bathtub.png"
+  />
+</a>
+
+<p>Give your CFML a spa day. The Islands Architecture for ColdFusion.</p>
+
+</div>
+
+<hr />
+
+Mount Vue or React components into CFML pages with server-side rendering and progressive hydration.
 
 ## Install
 

@@ -1,4 +1,7 @@
-# Docker & cross-host setups
+---
+title: Docker & cross-host setups
+description: How to configure Coldspa when CF and the Vite/Node sidecar run on different hosts (e.g. CF in Docker, Vite/Node on the host).
+---
 
 When CF and the Vite/Node sidecar live on different hosts (most commonly: CF in a Docker container, Vite/Node on the host), two URLs need to work from **different perspectives**:
 

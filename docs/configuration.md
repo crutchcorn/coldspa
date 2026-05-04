@@ -1,4 +1,7 @@
-# Configuration
+---
+title: Configuration
+description: Configure Coldspa's behavior via `coldspa.config.json` or environment variables.
+---
 
 Coldspa resolves config in this order (highest priority first):
 

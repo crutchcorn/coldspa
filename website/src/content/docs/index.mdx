@@ -1,40 +1,45 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: Coldspa
+description: Give your CFML a spa day. The Islands Architecture for ColdFusion -- mount Vue or React components into CFML pages with server-side rendering and progressive hydration.
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
+  tagline: Give your CFML a spa day. The Islands Architecture for ColdFusion.
   image:
-    file: ../../assets/houston.webp
+    file: ../../../public/bathtub.png
   actions:
-    - text: Example Guide
+    - text: Get started
       link: /guides/example/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: View on GitHub
+      link: https://github.com/crutchcorn/coldspa
       icon: external
       variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
+Mount Vue or React components into CFML pages with server-side rendering and progressive hydration. Coldspa brings the islands architecture popularized by Astro to ColdFusion, so you can keep rendering pages with CFML while sprinkling in interactive widgets that hydrate on demand.
+
+## Why Coldspa?
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+	<Card title="CFML-first" icon="seti:coldfusion">
+		Use `<cf_Island>` and `<cf_Slot>` like any other custom tags. Pass CFML structs as props and CFML markup as slots.
 	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
+	<Card title="Real SSR" icon="rocket">
+		A Node sidecar pre-renders Vue and React to HTML so the page is meaningful before JS loads -- no flash of empty containers.
 	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Progressive hydration" icon="setting">
+		Choose `load`, `idle`, `visible`, or `client` per island. Below-the-fold widgets stay dormant until the user scrolls.
 	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
+	<Card title="Vite-powered" icon="seti:javascript">
+		HMR in dev, hashed bundles + manifest in prod. One Vite plugin (`coldspa/vite`) wires up component globs, client entries, and the SSR build.
 	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	<Card title="Vue & React" icon="seti:vue">
+		Both frameworks supported out of the box, and you can mix them on the same page.
+	</Card>
+	<Card title="Slots, the CFML way" icon="document">
+		Default and named slots come from CFML markup -- including `<cfoutput>` queries, `<cfinclude>`, and conditionals.
 	</Card>
 </CardGrid>
+

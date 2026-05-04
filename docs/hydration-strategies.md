@@ -1,4 +1,7 @@
-# Hydration strategies
+---
+title: Hydration Strategies
+description: A guide to Coldspa's hydration strategies.
+---
 
 `strategy=` on `<cf_Island>` controls **when** (and **whether**) the component is rendered.
 

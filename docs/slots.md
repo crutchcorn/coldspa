@@ -1,4 +1,7 @@
-# Slots
+---
+title: Slots
+description: A guide to using slots in Coldspa components.
+---
 
 `cf_Island` captures any HTML between its opening and closing tags and passes it to your component as the **default** slot. Use the `<cf_Slot name="...">` child tag to project additional **named** slots. Both forms accept dynamic CFML markup (queries, conditionals, includes) and stream it straight into a Vue/React component.
 
