@@ -4,7 +4,7 @@
 // For a single-framework dev server, use vite.config.vue.js or
 // vite.config.react.js via `npm run vite:vue` / `npm run vite:react`.
 import { defineConfig } from 'vite';
-import coldspa from './coldspa/vite/plugin.js';
+import coldspa from 'coldspa/vite';
 
 export default defineConfig({
     plugins: [

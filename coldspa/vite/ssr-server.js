@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // Coldspa SSR sidecar.
 //
 // CFML calls this over HTTP to render component HTML before sending the page.

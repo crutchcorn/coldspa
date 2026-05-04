@@ -1,6 +1,31 @@
 # Coldspa
 
-Astro-style framework islands for ColdFusion. Mount Vue (and React, soon) components into CFML pages with server-side rendering and progressive hydration.
+Give your CFML a spa day. The Islands Architecture for ColdFusion. Mount Vue or React components into CFML pages with server-side rendering and progressive hydration.
+
+## Install
+
+```bash
+npm install coldspa vite vue   # or: react react-dom
+```
+
+## Configure Vite
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+import coldspa from 'coldspa/vite';
+
+export default defineConfig({
+    plugins: [
+        coldspa({
+            frameworks: ['vue'],            // or ['vue', 'react']
+            globs: { vue: '/src/**/*.vue' } // where your components live
+        })
+    ]
+});
+```
+
+## Use it from CFML
 
 ```cfml
 <cfinclude template="/coldspa/renderers/Vue.cfm">
@@ -10,13 +35,18 @@ Astro-style framework islands for ColdFusion. Mount Vue (and React, soon) compon
     path="./src/App.vue"
     props="#{ hello: 'World' }#"
     strategy="visible">
+
+    <p>Default-slot content rendered by CFML.</p>
+
+    <cf_Slot name="header">
+        <h2>Header from CFML</h2>
+    </cf_Slot>
 </cf_Island>
 ```
 
-## Quick start
+## Run it
 
 ```bash
-npm install
 npm run dev      # Vite dev server (HMR)
 npm run ssr      # Node SSR sidecar
 ```
@@ -28,88 +58,10 @@ npm run build      # builds client + SSR bundles
 npm run ssr:prod   # runs the sidecar against the built bundle
 ```
 
-## Hydration strategies
+## Documentation
 
-`strategy=` controls when (and whether) the component renders.
+- [Hydration strategies](docs/hydration-strategies.md) — `load`, `idle`, `visible`, `client`
+- [Slots](docs/slots.md) — default + named slots, `cf_Slot`, gotchas
+- [Configuration](docs/configuration.md) — `coldspa.config.json`, env vars
+- [Docker & cross-host setups](docs/docker.md) — running CF and Vite on different hosts
 
-| Strategy  | SSR'd HTML? | Client boots when…                                  |
-|-----------|-------------|-----------------------------------------------------|
-| `load`    | yes         | the module loads (default)                          |
-| `idle`    | yes         | `requestIdleCallback` fires                         |
-| `visible` | yes         | the mount enters the viewport (`IntersectionObserver`) |
-| `client`  | **no**      | the module loads (no SSR HTML or CSS is emitted)    |
-
-Use `client` for components that depend on browser-only APIs (window, IndexedDB, etc.) or where SSR isn't worth the round-trip.
-
-## Configuration
-
-Coldspa resolves config in this order (highest priority first):
-
-1. **Environment variables** — for CI/CD, Docker, prod
-2. **`coldspa.config.json`** in the webroot — for local dev / Admin UI
-3. **Built-in defaults**
-
-### Environment variables
-
-| Variable            | Effect                                                                   |
-|---------------------|--------------------------------------------------------------------------|
-| `CF_ENV`            | `development` / `dev` switches Coldspa to dev mode                       |
-| `COLDSPA_SSR_URL`   | Where **CF** reaches the SSR sidecar (server-to-server)                  |
-| `COLDSPA_VITE_URL`  | Where the **browser** reaches the Vite dev server (used for asset URLs)  |
-| `COLDSPA_DEBUG`     | `1` / `true` emits diagnostic HTML comments per island                   |
-| `COLDSPA_SSR_PORT`  | (sidecar) Port to listen on. Default `5174`                              |
-| `COLDSPA_SSR_HOST`  | (sidecar) Bind address. Default `0.0.0.0`. Use `127.0.0.1` to lock down  |
-| `NODE_ENV`          | (sidecar) `production` switches sidecar to use built bundle              |
-
-### `coldspa.config.json`
-
-Lives in the webroot. Should be `.gitignore`d (it can be edited via the CF Admin UI). Any keys you set here are merged on top of defaults but overridden by env vars.
-
-```json
-{
-    "isDev": true,
-    "debug": false,
-    "ssrUrl":  "http://127.0.0.1:5174",
-    "viteUrl": "http://localhost:5173",
-    "vitePort": "5173"
-}
-```
-
-| Key        | Default                  | Description                                                 |
-|------------|--------------------------|-------------------------------------------------------------|
-| `isDev`    | `false`                  | Dev mode (uses Vite dev server) vs prod (uses `dist/`)      |
-| `debug`    | `false`                  | Emit `<!-- coldspa SSR: ... -->` diagnostic comments        |
-| `ssrUrl`   | `http://127.0.0.1:5174`  | SSR sidecar URL (server-to-server)                          |
-| `viteUrl`  | unset                    | Browser-facing Vite URL. Falls back to `localhost:vitePort` |
-| `vitePort` | `"5173"`                 | Used to build the default `viteUrl` if `viteUrl` is unset   |
-
-After editing `coldspa.config.json`, request any page with `?reloadApp=1` to bust the cached config (or restart CF).
-
-### Docker / cross-host setups
-
-Two URLs need to work from **different perspectives**:
-
-- `ssrUrl` — CF → Node sidecar (server-to-server). Set this on the CF container.
-- `viteUrl` — Browser → Vite dev server. Set this so generated `<script src="...">` URLs are reachable from the user's browser.
-
-Common patterns:
-
-| Setup                                        | `ssrUrl`                            | `viteUrl`                          |
-|----------------------------------------------|-------------------------------------|------------------------------------|
-| All on one host                              | `http://127.0.0.1:5174`             | _(unset — defaults to localhost)_  |
-| CF in Docker, Node on host (Win/Mac)         | `http://host.docker.internal:5174`  | `http://host.docker.internal:5173` |
-| CF in Docker, Node on host (Linux)           | `http://host.docker.internal:5174` ¹ | `http://host.docker.internal:5173` ¹ |
-| Both in docker-compose (sidecar service `coldspa-ssr`) | `http://coldspa-ssr:5174` | `http://localhost:5173` ²          |
-
-¹ On Linux, add `--add-host=host.docker.internal:host-gateway` to the CF container.
-² The browser still hits `localhost` because Vite's port is published from the compose stack to the host.
-
-### Vite dev server host binding
-
-When `viteUrl` (or `COLDSPA_VITE_URL`) points at a non-localhost host, the Coldspa Vite plugin automatically:
-
-- binds the dev server to all interfaces (`server.host: true`)
-- adds the discovered hostname to `server.allowedHosts` so Vite 5.4+ doesn't reject the request with `403 Forbidden`
-- sets `server.origin` and `server.hmr.host` so generated asset / HMR URLs use the external hostname
-
-No extra Vite config is required — just set the URL.
