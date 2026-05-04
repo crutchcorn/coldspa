@@ -60,18 +60,18 @@ component extends="testbox.system.BaseSpec" {
 				expect( html ).toMatch( '<div id="island-[a-f0-9]+" data-coldspa-island="Vue"></div>' );
 			} );
 
-			it( "does not emit any SSR <style> or <link> tags", function(){
+			it( "does not emit any SSR style or link tags", function(){
 				var html = renderIsland( framework = mockVue, path = "./Hello.vue", props = {}, strategy = "client" );
 				expect( html ).notToInclude( "data-coldspa-ssr" );
 			} );
 
-			it( "does not emit a slot <template> when there are no slots", function(){
+			it( "does not emit a slot template when there are no slots", function(){
 				var html = renderIsland( framework = mockVue, path = "./Hello.vue", props = {}, strategy = "client" );
 				expect( html ).notToInclude( "<template" );
 				expect( html ).notToInclude( "data-coldspa-slot" );
 			} );
 
-			it( "emits a <script type='module'> with the mount call", function(){
+			it( "emits a script module tag with the mount call", function(){
 				var html = renderIsland( framework = mockVue, path = "./Hello.vue", props = { "msg": "hi" }, strategy = "client" );
 				expect( html ).toInclude( '<script type="module">' );
 				expect( html ).toInclude( "import { mount } from 'http://localhost:5173/coldspa/vite/clients/vue-client.js';" );
