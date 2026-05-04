@@ -34,17 +34,31 @@ npm install coldspa vite vue   # or: react react-dom
 
 ## Setup
 
-Register the module's directory as a custom tag path so `<cf_Island>` and `<cf_Slot>` resolve from anywhere in your app:
+Register the module's directory as a custom tag path so `<cf_Island>` and `<cf_Slot>` resolve from anywhere in your app, and delegate to `coldspa.Bootstrap` from your lifecycle methods so Coldspa can boot the Vite + SSR sidecar processes:
 
 ```cfc
 // Application.cfc
 component {
     this.name = "MyApp";
     this.customTagPaths = expandPath("/modules/coldspa");
+
+    function onApplicationStart() {
+        new coldspa.Bootstrap().onApplicationStart();
+        return true;
+    }
+
+    function onApplicationStop() {
+        new coldspa.Bootstrap().onApplicationStop();
+    }
+
+    function onRequestStart(targetPage) {
+        new coldspa.Bootstrap().onRequestStart();
+        return true;
+    }
 }
 ```
 
-ColdBox users can skip this — the bundled `ModuleConfig.cfc` wires the custom tag path automatically.
+ColdBox users can skip this — the bundled `ModuleConfig.cfc` registers the custom tag path and wires the bootstrap lifecycle automatically.
 
 ## Configure Vite
 

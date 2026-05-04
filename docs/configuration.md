@@ -17,6 +17,7 @@ Coldspa resolves config in this order (highest priority first):
 | `COLDSPA_SSR_URL`   | Where **CF** reaches the SSR sidecar (server-to-server)                  |
 | `COLDSPA_VITE_URL`  | Where the **browser** reaches the Vite dev server (used for asset URLs)  |
 | `COLDSPA_DEBUG`     | `1` / `true` emits diagnostic HTML comments per island                   |
+| `COLDSPA_NO_BOOTSTRAP` | `1` / `true` disables the auto-spawn of Vite + SSR sidecar in `onApplicationStart`. Use when you manage Node processes yourself (systemd, docker-compose, etc.) |
 | `COLDSPA_SSR_PORT`  | (sidecar) Port to listen on. Default `5174`                              |
 | `COLDSPA_SSR_HOST`  | (sidecar) Bind address. Default `0.0.0.0`. Use `127.0.0.1` to lock down  |
 | `NODE_ENV`          | (sidecar) `production` switches sidecar to use built bundle              |

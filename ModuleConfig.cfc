@@ -29,4 +29,28 @@ component {
         settings.customTagPaths = current & sep & moduleMapping;
         controller.setApplicationSettings(settings);
     }
+
+    /**
+     * ColdBox interceptor: bootstrap Coldspa (config + Node processes) once
+     * the application has finished loading. Mirrors what consumers of plain
+     * CFML wire up by calling Bootstrap.onApplicationStart() themselves.
+     */
+    function afterAspectsLoad() {
+        new coldspa.Bootstrap().onApplicationStart();
+    }
+
+    /**
+     * ColdBox interceptor: tear down spawned processes when the application
+     * is unloaded.
+     */
+    function preReinit() {
+        new coldspa.Bootstrap().onApplicationStop();
+    }
+
+    /**
+     * ColdBox interceptor: per-request reload hooks (?reloadApp / ?reloadConfig).
+     */
+    function preProcess() {
+        new coldspa.Bootstrap().onRequestStart();
+    }
 }

@@ -8,6 +8,12 @@ When CF and the Vite/Node sidecar live on different hosts (most commonly: CF in 
 - `ssrUrl` — CF → Node sidecar (server-to-server). Set this on the CF container.
 - `viteUrl` — Browser → Vite dev server. Set this so generated `<script src="...">` URLs are reachable from the user's browser.
 
+## Don't run Node inside the CF container
+
+Coldspa's `Application.cfc` will try to spawn `npm run dev` and `npm run ssr` on application start. **In a typical Docker setup the CF container has no Node installed**, so the spawn fails — Coldspa detects that `npm` isn't on `PATH` and skips the spawn (with a one-line note in `WEB-INF/coldspa-logs/manager.log`). You're then expected to run Vite/Node externally and point `ssrUrl`/`viteUrl` at them.
+
+If you'd like to suppress the auto-spawn entirely (and the npm probe), set `COLDSPA_NO_BOOTSTRAP=1` on the CF container.
+
 ## Common patterns
 
 | Setup                                        | `ssrUrl`                            | `viteUrl`                          |
