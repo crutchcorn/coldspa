@@ -43,10 +43,10 @@ if (!structKeyExists(attributes.framework, "render") || !isCustomFunction(attrib
 }
 
 // --- resolve config (lazy fallback if Application.cfc didn't wire it)
-if (!structKeyExists(application, "islandConfig")) {
-    application.islandConfig = new coldspa.IslandConfig().get();
+if (!structKeyExists(application, "coldspaConfig")) {
+    application.coldspaConfig = new coldspa.ColdspaConfig().get();
 }
-cfg = application.islandConfig;
+cfg = application.coldspaConfig;
 
 // --- resolve asset path (dev: vite server URL; prod: manifest lookup)
 function resolveAsset(required string path) {

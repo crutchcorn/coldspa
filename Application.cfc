@@ -5,7 +5,7 @@
     <cfset this.sessionManagement = false>
 
     <cffunction name="onApplicationStart" returntype="boolean" output="false">
-        <cfset application.islandConfig = new coldspa.IslandConfig().get()>
+        <cfset application.coldspaConfig = new coldspa.ColdspaConfig().get()>
         <!---
             TODO (per design doc):
               - In dev: spin up Vite dev server via cfexecute
@@ -20,7 +20,7 @@
         <cfargument name="targetPage" type="string" required="true">
         <!--- Quick reload hook for dev iteration --->
         <cfif structKeyExists(url, "reloadConfig")>
-            <cfset application.islandConfig = new coldspa.IslandConfig().get()>
+            <cfset application.coldspaConfig = new coldspa.ColdspaConfig().get()>
         </cfif>
         <cfif structKeyExists(url, "reloadApp")>
             <cfset onApplicationStart()>

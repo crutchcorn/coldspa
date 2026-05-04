@@ -26,8 +26,8 @@
 
     <hr>
     <p><small>
-        Mode: <cfoutput>#(application.islandConfig.isDev ? "development" : "production")#</cfoutput>
-        | Vite port: <cfoutput>#application.islandConfig.vitePort#</cfoutput>
+        Mode: <cfoutput>#(application.coldspaConfig.isDev ? "development" : "production")#</cfoutput>
+        | Vite port: <cfoutput>#application.coldspaConfig.vitePort#</cfoutput>
     </small></p>
 </body>
 </html>

@@ -1,6 +1,6 @@
 <cfcomponent output="false" hint="Singleton config for Coldspa islands. Resolves dev/prod mode and Vite port.">
 
-    <cffunction name="init" access="public" returntype="IslandConfig" output="false">
+    <cffunction name="init" access="public" returntype="ColdspaConfig" output="false">
         <cfset variables.config = resolve()>
         <cfreturn this>
     </cffunction>

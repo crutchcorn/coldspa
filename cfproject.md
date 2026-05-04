@@ -96,7 +96,7 @@ Mirrors Astro's client directives:
 
 ---
 
-## Configuration System (`IslandConfig.cfc`)
+## Configuration System (`ColdspaConfig.cfc`)
 
 A singleton CFC that owns all config resolution with the following precedence:
 
@@ -120,8 +120,8 @@ CF_ENV environment variable   ← highest priority (CI/CD, Docker)
 ### Lifecycle
 
 - Loaded once in `Application.cfc` `onApplicationStart()` into
-  `application.islandConfig`
-- Saving via the Admin UI busts `application.islandConfig` immediately so
+  `application.coldspaConfig`
+- Saving via the Admin UI busts `application.coldspaConfig` immediately so
   changes take effect without a server restart
 
 ### `coldspa.config.json`
@@ -143,7 +143,7 @@ CF_ENV environment variable   ← highest priority (CI/CD, Docker)
   content-hashed filename
 
 Resolved via a `resolveAsset(path)` utility inside `cf_Island.cfm`, using
-`application.islandConfig` to determine mode.
+`application.coldspaConfig` to determine mode.
 
 ### Build Behavior
 

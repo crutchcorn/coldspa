@@ -13,7 +13,7 @@ Vue = {
      * diagnostic info in dev mode.
      */
     "ssrRender": function(componentGlobKey, props) {
-        var ssrUrl = (application.islandConfig.ssrUrl ?: "http://127.0.0.1:5174")
+        var ssrUrl = (application.coldspaConfig.ssrUrl ?: "http://127.0.0.1:5174")
                      & "/render/vue";
         var payload = serializeJSON({
             "componentPath": arguments.componentGlobKey,
