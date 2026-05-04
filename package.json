@@ -5,13 +5,18 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "ssr": "node coldspa/vite/ssr-server.js",
+        "ssr:prod": "cross-env NODE_ENV=production node coldspa/vite/ssr-server.js",
+        "build": "vite build && cross-env COLDSPA_SSR=1 vite build",
+        "build:client": "vite build",
+        "build:ssr": "cross-env COLDSPA_SSR=1 vite build"
     },
     "dependencies": {
         "vue": "^3.4.0"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.0.0",
+        "cross-env": "^7.0.3",
         "vite": "^5.0.0"
     }
 }

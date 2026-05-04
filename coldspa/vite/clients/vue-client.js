@@ -1,6 +1,9 @@
 // Coldspa Vue client entry. Bundled by Vite via the coldspa plugin.
 // __COLDSPA_GLOB__ is replaced at build time by the plugin's transform hook.
-import { createApp } from 'vue';
+//
+// Uses createSSRApp so .mount(el) HYDRATES if `el` already contains
+// server-rendered HTML, or mounts fresh if the SSR sidecar wasn't available.
+import { createSSRApp } from 'vue';
 
 const components = import.meta.glob('__COLDSPA_GLOB__');
 
@@ -15,5 +18,5 @@ export async function mount(componentPath, el, props) {
         return;
     }
     const mod = await loader();
-    createApp(mod.default, props).mount(el);
+    createSSRApp(mod.default, props).mount(el);
 }

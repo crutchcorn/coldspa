@@ -27,7 +27,7 @@
     <!--- ===== private ===== --->
 
     <cffunction name="resolve" access="private" returntype="struct" output="false">
-        <cfset var defaults = { "isDev": false, "vitePort": "5173" }>
+        <cfset var defaults = { "isDev": false, "vitePort": "5173", "ssrUrl": "http://127.0.0.1:5174" }>
         <cfset var resolved = duplicate(defaults)>
 
         <!--- 2nd priority: /island-config.json --->
@@ -45,14 +45,37 @@
             </cftry>
         </cfif>
 
-        <!--- 1st priority: CF_ENV environment variable --->
-        <cfset var envName = "">
+        <!--- 1st priority: environment variables (CI/CD, Docker) --->
+        <cfset var envSys = "">
         <cftry>
-            <cfset envName = createObject("java", "java.lang.System").getenv("CF_ENV") ?: "">
-            <cfcatch type="any"><cfset envName = ""></cfcatch>
+            <cfset envSys = createObject("java", "java.lang.System")>
+            <cfcatch type="any"></cfcatch>
         </cftry>
-        <cfif len(envName)>
-            <cfset resolved.isDev = (lcase(envName) eq "development" or lcase(envName) eq "dev")>
+
+        <cfif isObject(envSys)>
+            <cfset var envName = envSys.getenv("CF_ENV") ?: "">
+            <cfif len(envName)>
+                <cfset resolved.isDev = (lcase(envName) eq "development" or lcase(envName) eq "dev")>
+            </cfif>
+
+            <!--- COLDSPA_SSR_URL: where CF reaches the SSR sidecar.
+                  Common values:
+                    http://127.0.0.1:5174        -- CF and Node on same host
+                    http://host.docker.internal:5174  -- CF in Docker, Node on Docker host
+                    http://coldspa-ssr:5174      -- CF and Node both in compose, sidecar service name
+                    https://ssr.internal.example -- separate prod box / pod --->
+            <cfset var envSsrUrl = envSys.getenv("COLDSPA_SSR_URL") ?: "">
+            <cfif len(envSsrUrl)>
+                <cfset resolved.ssrUrl = envSsrUrl>
+            </cfif>
+
+            <!--- COLDSPA_VITE_URL: where the BROWSER reaches Vite in dev.
+                  This is what gets prefixed onto component URLs. Same Docker
+                  caveats apply but from the browser's perspective. --->
+            <cfset var envViteUrl = envSys.getenv("COLDSPA_VITE_URL") ?: "">
+            <cfif len(envViteUrl)>
+                <cfset resolved.viteUrl = envViteUrl>
+            </cfif>
         </cfif>
 
         <cfreturn resolved>

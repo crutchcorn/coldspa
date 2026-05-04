@@ -49,7 +49,10 @@ function resolveAsset(required string path) {
     if (cfg.isDev) {
         // Strip leading "./" so we get a clean URL join
         var clean = reReplace(arguments.path, "^\./", "");
-        return "http://localhost:#cfg.vitePort#/#clean#";
+        // viteUrl override (from COLDSPA_VITE_URL env) lets the browser reach
+        // a Vite dev server that isn't on localhost (e.g. host.docker.internal).
+        var viteBase = cfg.viteUrl ?: ("http://localhost:" & cfg.vitePort);
+        return viteBase & "/" & clean;
     }
 
     // Production: look up content-hashed file in vite manifest
@@ -97,10 +100,37 @@ if (isSimpleValue(rendered)) {
 }
 bootImports = rendered.imports;
 bootBody    = rendered.body;
+
+// Server-side rendering. If the renderer supports ssrRender(), call the SSR
+// sidecar and embed the returned HTML inside the mount div. The client's
+// createSSRApp().mount() will hydrate it on load. If SSR fails or isn't
+// available, we just emit an empty div and the client mounts fresh -- so the
+// page works either way (just no JS-off rendering in that case).
+ssrHtml  = "";
+ssrError = "";
+if (structKeyExists(attributes.framework, "ssrRender")) {
+    ssrResult = attributes.framework.ssrRender(componentGlobKey, attributes.props);
+    // Tolerate older renderers that returned a plain string.
+    if (isStruct(ssrResult)) {
+        ssrHtml  = ssrResult.html  ?: "";
+        ssrError = ssrResult.error ?: "";
+    } else {
+        ssrHtml = ssrResult;
+    }
+}
 </cfscript>
 
-<!--- Mount point --->
-<div id="<cfoutput>#mountId#</cfoutput>" data-coldspa-island="<cfoutput>#attributes.framework.name#</cfoutput>"></div>
+<!--- Surface SSR failures so they aren't silently swallowed. --->
+<cfif len(ssrError)>
+    <cfoutput><!-- coldspa SSR error: #encodeForHTML(ssrError)# --></cfoutput>
+<cfelseif not len(ssrHtml)>
+    <cfoutput><!-- coldspa SSR: empty html, no error reported (renderer may not implement ssrRender) --></cfoutput>
+<cfelse>
+    <cfoutput><!-- coldspa SSR: ok (#len(ssrHtml)# bytes) --></cfoutput>
+</cfif>
+
+<!--- Mount point (contains SSR HTML if available, for hydration) --->
+<div id="<cfoutput>#mountId#</cfoutput>" data-coldspa-island="<cfoutput>#attributes.framework.name#</cfoutput>"><cfoutput>#ssrHtml#</cfoutput></div>
 
 <cfoutput>
 <cfswitch expression="#attributes.strategy#">
