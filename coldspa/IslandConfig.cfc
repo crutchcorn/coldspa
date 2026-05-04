@@ -27,7 +27,7 @@
     <!--- ===== private ===== --->
 
     <cffunction name="resolve" access="private" returntype="struct" output="false">
-        <cfset var defaults = { "isDev": false, "vitePort": "5173", "ssrUrl": "http://127.0.0.1:5174" }>
+        <cfset var defaults = { "isDev": false, "debug": false, "vitePort": "5173", "ssrUrl": "http://127.0.0.1:5174" }>
         <cfset var resolved = duplicate(defaults)>
 
         <!--- 2nd priority: /island-config.json --->
@@ -75,6 +75,13 @@
             <cfset var envViteUrl = envSys.getenv("COLDSPA_VITE_URL") ?: "">
             <cfif len(envViteUrl)>
                 <cfset resolved.viteUrl = envViteUrl>
+            </cfif>
+
+            <!--- COLDSPA_DEBUG: when truthy ("1", "true", "yes"), Island.cfm
+                  emits diagnostic HTML comments about SSR status / byte counts. --->
+            <cfset var envDebug = envSys.getenv("COLDSPA_DEBUG") ?: "">
+            <cfif len(envDebug)>
+                <cfset resolved.debug = listFindNoCase("1,true,yes,on", envDebug) gt 0>
             </cfif>
         </cfif>
 

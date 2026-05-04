@@ -155,15 +155,17 @@ if (!cfg.isDev && len(ssrHtml) && structKeyExists(attributes.framework, "clientE
 }
 </cfscript>
 
-<!--- Surface SSR failures so they aren't silently swallowed. --->
-<cfif clientOnly>
-    <cfoutput><!-- coldspa SSR: skipped (strategy="client") --></cfoutput>
-<cfelseif len(ssrError)>
-    <cfoutput><!-- coldspa SSR error: #encodeForHTML(ssrError)# --></cfoutput>
-<cfelseif not len(ssrHtml)>
-    <cfoutput><!-- coldspa SSR: empty html, no error reported (renderer may not implement ssrRender) --></cfoutput>
-<cfelse>
-    <cfoutput><!-- coldspa SSR: ok (#len(ssrHtml)# bytes, #len(ssrCss)# css bytes) --></cfoutput>
+<!--- Surface SSR failures so they aren't silently swallowed (debug only). --->
+<cfif (cfg.debug ?: false)>
+    <cfif clientOnly>
+        <cfoutput><!-- coldspa SSR: skipped (strategy="client") --></cfoutput>
+    <cfelseif len(ssrError)>
+        <cfoutput><!-- coldspa SSR error: #encodeForHTML(ssrError)# --></cfoutput>
+    <cfelseif not len(ssrHtml)>
+        <cfoutput><!-- coldspa SSR: empty html, no error reported (renderer may not implement ssrRender) --></cfoutput>
+    <cfelse>
+        <cfoutput><!-- coldspa SSR: ok (#len(ssrHtml)# bytes, #len(ssrCss)# css bytes) --></cfoutput>
+    </cfif>
 </cfif>
 
 <!--- Inline scoped/component CSS (dev) so styles are present pre-hydration. --->

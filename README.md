@@ -56,6 +56,7 @@ Coldspa resolves config in this order (highest priority first):
 | `CF_ENV`            | `development` / `dev` switches Coldspa to dev mode                       |
 | `COLDSPA_SSR_URL`   | Where **CF** reaches the SSR sidecar (server-to-server)                  |
 | `COLDSPA_VITE_URL`  | Where the **browser** reaches the Vite dev server (used for asset URLs)  |
+| `COLDSPA_DEBUG`     | `1` / `true` emits diagnostic HTML comments per island                   |
 | `COLDSPA_SSR_PORT`  | (sidecar) Port to listen on. Default `5174`                              |
 | `COLDSPA_SSR_HOST`  | (sidecar) Bind address. Default `0.0.0.0`. Use `127.0.0.1` to lock down  |
 | `NODE_ENV`          | (sidecar) `production` switches sidecar to use built bundle              |
@@ -67,6 +68,7 @@ Lives in the webroot. Should be `.gitignore`d (it can be edited via the CF Admin
 ```json
 {
     "isDev": true,
+    "debug": false,
     "ssrUrl":  "http://127.0.0.1:5174",
     "viteUrl": "http://localhost:5173",
     "vitePort": "5173"
@@ -76,6 +78,7 @@ Lives in the webroot. Should be `.gitignore`d (it can be edited via the CF Admin
 | Key        | Default                  | Description                                                 |
 |------------|--------------------------|-------------------------------------------------------------|
 | `isDev`    | `false`                  | Dev mode (uses Vite dev server) vs prod (uses `dist/`)      |
+| `debug`    | `false`                  | Emit `<!-- coldspa SSR: ... -->` diagnostic comments        |
 | `ssrUrl`   | `http://127.0.0.1:5174`  | SSR sidecar URL (server-to-server)                          |
 | `viteUrl`  | unset                    | Browser-facing Vite URL. Falls back to `localhost:vitePort` |
 | `vitePort` | `"5173"`                 | Used to build the default `viteUrl` if `viteUrl` is unset   |
