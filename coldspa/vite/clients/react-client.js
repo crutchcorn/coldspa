@@ -1,11 +1,14 @@
 // Coldspa React client entry. Bundled by Vite via the coldspa plugin.
 // __COLDSPA_GLOB__ is replaced at build time by the plugin's transform hook.
+//
+// `options.strategy === 'client'` -> createRoot   (fresh client render)
+// otherwise                        -> hydrateRoot (hydrates SSR markup)
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 
 const components = import.meta.glob('__COLDSPA_GLOB__');
 
-export async function mount(componentPath, el, props) {
+export async function mount(componentPath, el, props, options) {
     if (!el) return;
     const loader = components[componentPath];
     if (!loader) {
@@ -16,5 +19,10 @@ export async function mount(componentPath, el, props) {
         return;
     }
     const mod = await loader();
-    createRoot(el).render(React.createElement(mod.default, props));
+    const node = React.createElement(mod.default, props);
+    if (options && options.strategy === 'client') {
+        createRoot(el).render(node);
+    } else {
+        hydrateRoot(el, node);
+    }
 }

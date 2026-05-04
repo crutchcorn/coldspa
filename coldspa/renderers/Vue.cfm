@@ -42,7 +42,7 @@ Vue = {
         }
     },
 
-    "render": function(mountId, componentGlobKey, propsJson, resolvedClientEntry) {
+    "render": function(mountId, componentGlobKey, propsJson, resolvedClientEntry, optionsJson) {
         var jsId = arguments.mountId.replace('-', '_', 'all');
         return {
             "imports": "
@@ -52,7 +52,8 @@ Vue = {
                 __coldspa_mount_#jsId#(
                     '#arguments.componentGlobKey#',
                     document.getElementById('#arguments.mountId#'),
-                    #arguments.propsJson#
+                    #arguments.propsJson#,
+                    #arguments.optionsJson#
                 );
             "
         };

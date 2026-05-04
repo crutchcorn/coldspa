@@ -28,6 +28,19 @@ npm run build      # builds client + SSR bundles
 npm run ssr:prod   # runs the sidecar against the built bundle
 ```
 
+## Hydration strategies
+
+`strategy=` controls when (and whether) the component renders.
+
+| Strategy  | SSR'd HTML? | Client boots when…                                  |
+|-----------|-------------|-----------------------------------------------------|
+| `load`    | yes         | the module loads (default)                          |
+| `idle`    | yes         | `requestIdleCallback` fires                         |
+| `visible` | yes         | the mount enters the viewport (`IntersectionObserver`) |
+| `client`  | **no**      | the module loads (no SSR HTML or CSS is emitted)    |
+
+Use `client` for components that depend on browser-only APIs (window, IndexedDB, etc.) or where SSR isn't worth the round-trip.
+
 ## Configuration
 
 Coldspa resolves config in this order (highest priority first):
