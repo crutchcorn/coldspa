@@ -4,9 +4,31 @@ Give your CFML a spa day. The Islands Architecture for ColdFusion. Mount Vue or 
 
 ## Install
 
+CFML side (via [CommandBox](https://www.ortussolutions.com/products/commandbox) / ForgeBox):
+
+```bash
+box install coldspa
+```
+
+Node side (Vite plugin + SSR sidecar):
+
 ```bash
 npm install coldspa vite vue   # or: react react-dom
 ```
+
+## Setup
+
+Register the module's directory as a custom tag path so `<cf_Island>` and `<cf_Slot>` resolve from anywhere in your app:
+
+```cfc
+// Application.cfc
+component {
+    this.name = "MyApp";
+    this.customTagPaths = expandPath("/modules/coldspa");
+}
+```
+
+ColdBox users can skip this — the bundled `ModuleConfig.cfc` wires the custom tag path automatically.
 
 ## Configure Vite
 
