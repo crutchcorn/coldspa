@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel any in-progress run for the same ref (PR or branch) when a new
+# commit lands. main pushes still queue independently because each push
+# produces a unique github.ref.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  testbox:
+    name: TestBox specs (Adobe ColdFusion 2025)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      # box.json declares testbox as a devDependency installed under
+      # modules/testbox/. The runner's Application.cfc maps /testbox to
+      # that location, so the spec runner can resolve testbox.system.BaseSpec.
+      - name: Install TestBox via CommandBox
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -w /app \
+            ortussolutions/commandbox:adobe2025 \
+            box install --verbose
+
+      # Boot the prewarmed Adobe CF 2025 image with the repo as the webroot.
+      # COLDSPA_NO_BOOTSTRAP disables the Vite/SSR sidecar spawn from
+      # Bootstrap.onApplicationStart() — there is no Node in this container,
+      # and the unit tests stub out the framework anyway.
+      - name: Start Adobe ColdFusion 2025
+        run: |
+          docker run -d --name coldfusion \
+            -p 8080:8080 \
+            -e COLDSPA_NO_BOOTSTRAP=1 \
+            -e BOX_SERVER_PROFILE=development \
+            -v "${{ github.workspace }}:/app" \
+            ortussolutions/commandbox:adobe2025
+
+      - name: Wait for ColdFusion to respond
+        run: |
+          set -e
+          for i in $(seq 1 90); do
+            if curl -fsS -o /dev/null -m 5 \
+                "http://localhost:8080/test-runner/runner.cfm?reporter=simple"; then
+              echo "Server is responding (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i: not ready yet, sleeping 5s..."
+            sleep 5
+          done
+          echo "::error::ColdFusion never became ready"
+          docker logs coldfusion || true
+          exit 1
+
+      - name: Run TestBox specs
+        run: |
+          set -euo pipefail
+          curl -fsS -m 300 \
+            "http://localhost:8080/test-runner/runner.cfm?reporter=simple" \
+            -o results.html
+
+          if ! grep -Eo 'Pass: [0-9]+ Fail: [0-9]+ Errors: [0-9]+' results.html >/dev/null; then
+            echo "::error::Could not find result summary line in TestBox output"
+            sed -n '1,200p' results.html
+            exit 1
+          fi
+
+          summary=$(grep -Eo 'Pass: [0-9]+ Fail: [0-9]+ Errors: [0-9]+' results.html | head -1)
+          echo "TestBox: $summary"
+          fail=$(echo "$summary"   | grep -Eo 'Fail: [0-9]+'   | grep -Eo '[0-9]+')
+          errors=$(echo "$summary" | grep -Eo 'Errors: [0-9]+' | grep -Eo '[0-9]+')
+
+          if [ "$fail" -ne 0 ] || [ "$errors" -ne 0 ]; then
+            echo "::error::Tests failed: $summary"
+            cat results.html
+            exit 1
+          fi
+
+      - name: Upload TestBox HTML report
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: testbox-results
+          path: results.html
+          if-no-files-found: ignore
+
+      - name: Print ColdFusion logs on failure
+        if: failure()
+        run: docker logs coldfusion || true
+
+      - name: Stop ColdFusion
+        if: always()
+        run: docker rm -f coldfusion || true
