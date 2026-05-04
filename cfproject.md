@@ -2,7 +2,7 @@
 
 ## Overview
 
-A ColdFusion library that brings Astro-style framework islands to ColdFusion
+A ColdFusion library called Coldspa that brings Astro-style framework islands to ColdFusion
 applications. Allows teams to incrementally adopt modern frontend frameworks
 (Vue, React, Svelte, etc.) without rewriting existing CFM-based apps.
 
@@ -27,7 +27,7 @@ The JS framework owns:
 ### Tag API
 
 ```cfml
-<cfimport path="mylib.renderers.Vue">
+<cfimport path="coldspa.renderers.Vue">
 
 <cfscript>
 props = {
@@ -61,7 +61,7 @@ Frameworks are passed as structs with a `render()` function. This keeps
 
 ### Interface
 
-Each renderer is a CFC in `mylib/renderers/` that assigns a struct to
+Each renderer is a CFC in `coldspa/renderers/` that assigns a struct to
 `caller.<FrameworkName>` containing:
 
 ```
@@ -76,8 +76,8 @@ component.
 
 ### Built-in Renderers
 
-- `mylib.renderers.Vue` — uses `createApp().mount()`
-- `mylib.renderers.React` — uses `createRoot().render()`
+- `coldspa.renderers.Vue` — uses `createApp().mount()`
+- `coldspa.renderers.React` — uses `createRoot().render()`
 
 Additional renderers can be authored by library consumers following the same
 interface.
