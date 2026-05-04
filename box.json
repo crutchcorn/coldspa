@@ -36,8 +36,12 @@
         }
     ],
     "dependencies":{},
-    "devDependencies":{},
-    "installPaths":{},
+    "devDependencies":{
+        "testbox":"^7.0.0+19"
+    },
+    "installPaths":{
+        "testbox":"modules/testbox/"
+    },
     "ignore":[
         "**/.*",
         "/test/",
@@ -46,6 +50,7 @@
         "/dist/",
         "/dist-ssr/",
         "/node_modules/",
+        "/modules/",
         "/src/",
         "/WEB-INF/",
         "package.json",
