@@ -49,7 +49,9 @@
         "ssr:prod": "cross-env NODE_ENV=production node coldspa/vite/ssr-server.js",
         "build": "vite build && cross-env COLDSPA_SSR=1 vite build",
         "build:client": "vite build",
-        "build:ssr": "cross-env COLDSPA_SSR=1 vite build"
+        "build:ssr": "cross-env COLDSPA_SSR=1 vite build",
+        "website:dev": "cd website && astro dev",
+        "website:build": "cd website && astro build"
     },
     "peerDependencies": {
         "@vitejs/plugin-react": "^4.0.0",
@@ -67,11 +69,14 @@
         "vue":                  { "optional": true }
     },
     "devDependencies": {
+        "@astrojs/starlight": "^0.38.4",
         "@vitejs/plugin-react": "^4.3.4",
         "@vitejs/plugin-vue": "^5.0.0",
+        "astro": "^6.1.9",
         "cross-env": "^7.0.3",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
+        "sharp": "^0.34.5",
         "vite": "^5.0.0",
         "vue": "^3.4.0"
     }
