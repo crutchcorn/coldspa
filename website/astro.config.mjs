@@ -16,7 +16,13 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Guides',
-					autogenerate: { directory: 'docs/guides' },
+					items: [
+						{ label: 'Getting started',      slug: 'guides/getting-started' },
+						{ label: 'Hydration strategies', slug: 'guides/hydration-strategies' },
+						{ label: 'Slots',                slug: 'guides/slots' },
+						{ label: 'Configuration',        slug: 'guides/configuration' },
+						{ label: 'Docker & cross-host',  slug: 'guides/docker' },
+					],
 				},
 			],
 		}),
