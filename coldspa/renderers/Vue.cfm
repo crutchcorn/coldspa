@@ -5,30 +5,29 @@
         <cfinclude template="/coldspa/renderers/Vue.cfm">
         <cf_Island framework="#Vue#" path="./App.vue" props="#props#">
 
-    Sets a `Vue` struct in the including scope with:
-        - name:    "Vue"
-        - render:  function(mountId, resolvedPath, propsJson) -> { imports, body }
-          imports: ES module imports to hoist to module top level
-          body:    statements to run inside the (possibly deferred) boot function
+    Sets a `Vue` struct in the including scope:
+        - name:        "Vue"
+        - clientEntry: path to the client entry shim (resolved by Island.cfm via Vite)
+        - render:      function(mountId, resolvedComponentPath, propsJson, resolvedClientEntry)
+                       -> { imports, body }
 --->
 <cfscript>
 Vue = {
     "name": "Vue",
-    "render": function(mountId, resolvedPath, propsJson) {
+    "clientEntry": "./coldspa/renderers/vue-client.js",
+    "render": function(mountId, resolvedPath, propsJson, resolvedClientEntry) {
+        var jsId = arguments.mountId.replace('-', '_', 'all');
         return {
             "imports": "
-                import { createApp as __coldspa_createApp_#arguments.mountId.replace('-', '_', 'all')# } from 'vue';
-                import __coldspa_Component_#arguments.mountId.replace('-', '_', 'all')# from '#arguments.resolvedPath#';
+                import { mount as __coldspa_mount_#jsId# } from '#arguments.resolvedClientEntry#';
+                import __coldspa_Component_#jsId# from '#arguments.resolvedPath#';
             ",
             "body": "
-                const el = document.getElementById('#arguments.mountId#');
-                if (el) {
-                    const props = #arguments.propsJson#;
-                    __coldspa_createApp_#arguments.mountId.replace('-', '_', 'all')#(
-                        __coldspa_Component_#arguments.mountId.replace('-', '_', 'all')#,
-                        props
-                    ).mount(el);
-                }
+                __coldspa_mount_#jsId#(
+                    __coldspa_Component_#jsId#,
+                    document.getElementById('#arguments.mountId#'),
+                    #arguments.propsJson#
+                );
             "
         };
     }

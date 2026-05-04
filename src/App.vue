@@ -1,8 +1,15 @@
 <script setup>
+import {ref} from "vue";
+
 defineProps({
     hello: { type: String, default: '' },
     serverTime: { type: String, default: '' }
 });
+
+const count = ref(0);
+function add() {
+    count.value++;
+}
 </script>
 
 <template>
@@ -10,6 +17,7 @@ defineProps({
         <h2>Hello, {{ hello }}!</h2>
         <p>Rendered server-side at: <code>{{ serverTime }}</code></p>
         <p>Hydrated client-side by Vue.</p>
+        <button @click="add()">{{count}}</button>
     </div>
 </template>
 

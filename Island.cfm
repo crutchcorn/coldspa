@@ -76,7 +76,15 @@ mountId      = "island-" & uid;        // DOM id (hyphens fine)
 jsId         = "island_" & uid;        // JS-identifier-safe (no hyphens)
 resolvedPath = resolveAsset(attributes.path);
 propsJson    = serializeJSON(attributes.props);
-rendered     = attributes.framework.render(mountId, resolvedPath, propsJson);
+
+// Resolve the renderer's client-entry shim through the same Vite-aware path resolver.
+// Renderers SHOULD declare `clientEntry`; tolerate older renderers that don't.
+resolvedClientEntry = "";
+if (structKeyExists(attributes.framework, "clientEntry")) {
+    resolvedClientEntry = resolveAsset(attributes.framework.clientEntry);
+}
+
+rendered = attributes.framework.render(mountId, resolvedPath, propsJson, resolvedClientEntry);
 
 // Backwards-compat: allow renderers that still return a plain string (treated as body, no imports)
 if (isSimpleValue(rendered)) {

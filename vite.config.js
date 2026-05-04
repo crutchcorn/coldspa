@@ -14,6 +14,8 @@ export default defineConfig({
         outDir: 'dist',
         rollupOptions: {
             input: {
+                'vue-client': resolve(__dirname, 'coldspa/renderers/vue-client.js'),
+                'react-client': resolve(__dirname, 'coldspa/renderers/react-client.js'),
                 'src/App.vue': resolve(__dirname, 'src/App.vue')
             }
         }

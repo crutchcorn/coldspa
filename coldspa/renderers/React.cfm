@@ -8,22 +8,20 @@
 <cfscript>
 React = {
     "name": "React",
-    "render": function(mountId, resolvedPath, propsJson) {
+    "clientEntry": "./coldspa/renderers/react-client.js",
+    "render": function(mountId, resolvedPath, propsJson, resolvedClientEntry) {
         var jsId = arguments.mountId.replace('-', '_', 'all');
         return {
             "imports": "
-                import __coldspa_React_#jsId# from 'react';
-                import { createRoot as __coldspa_createRoot_#jsId# } from 'react-dom/client';
+                import { mount as __coldspa_mount_#jsId# } from '#arguments.resolvedClientEntry#';
                 import __coldspa_Component_#jsId# from '#arguments.resolvedPath#';
             ",
             "body": "
-                const el = document.getElementById('#arguments.mountId#');
-                if (el) {
-                    const props = #arguments.propsJson#;
-                    __coldspa_createRoot_#jsId#(el).render(
-                        __coldspa_React_#jsId#.createElement(__coldspa_Component_#jsId#, props)
-                    );
-                }
+                __coldspa_mount_#jsId#(
+                    __coldspa_Component_#jsId#,
+                    document.getElementById('#arguments.mountId#'),
+                    #arguments.propsJson#
+                );
             "
         };
     }
