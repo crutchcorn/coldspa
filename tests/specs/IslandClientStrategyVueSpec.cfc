@@ -1,13 +1,13 @@
 /**
- * Spec: <cf_Island> with strategy="client"
+ * Spec: <cf_Island framework={Vue} strategy="client">
  *
  * The "client" strategy is the no-SSR contract: Island.cfm must NOT call the
  * framework's ssrRender(), must NOT emit SSR HTML / CSS / link tags, and must
  * still emit a boot script that the client uses to mount the component.
  *
- * We use a mock framework struct so the spec is hermetic — no Vite, no SSR
- * sidecar, no network. The shape (name, clientEntry, render, ssrRender) is
- * the same one Vue.cfm / React.cfm produce.
+ * We use a mock framework struct shaped like the one Vue.cfm produces, so
+ * the spec is hermetic — no Vite, no SSR sidecar, no network. React parity
+ * for this contract lives in IslandClientStrategyReactSpec.cfc.
  */
 component extends="testbox.system.BaseSpec" {
 
@@ -25,7 +25,7 @@ component extends="testbox.system.BaseSpec" {
 
 	function run(){
 
-		describe( "cf_Island strategy=client", function(){
+		describe( "cf_Island strategy=client (Vue)", function(){
 
 			beforeEach( function( currentSpec ){
 				// Tracks whether the framework's ssrRender() was invoked.
