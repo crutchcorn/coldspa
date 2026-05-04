@@ -96,19 +96,7 @@ export default defineConfig({
 </cf_Island>
 ```
 
-## Run it
-
-```bash
-npm run dev      # Vite dev server (HMR)
-npm run ssr      # Node SSR sidecar
-```
-
-For production:
-
-```bash
-npm run build      # builds client + SSR bundles
-npm run ssr:prod   # runs the sidecar against the built bundle
-```
+That's it — start your CF server and load the page. `coldspa.Bootstrap` auto-spawns the Vite dev server and Node SSR sidecar in the background and tears them down on app stop. For Docker, supervised deployments, or opting out, see [Getting started](docs/getting-started.md).
 
 ## Documentation
 
