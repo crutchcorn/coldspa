@@ -131,30 +131,6 @@ CF_ENV environment variable   ← highest priority (CI/CD, Docker)
 
 ---
 
-## CF Administrator UI Extension
-
-A custom page added to the ColdFusion Administrator nav under a "Island
-Settings" section, implemented via the CF Administrator Extension API.
-
-### Behavior
-
-- Displays the current `isDev` and `vitePort` values
-- If `CF_ENV` is set in the environment, the form is **disabled** and a visible
-  warning is shown explaining that the ENV var is overriding the UI
-- Saving writes to `island-config.json` and busts the application scope
-
-### ENV Lock Warning
-
-When `CF_ENV` is detected, the UI should display something like:
-
-> ⚠️ CF_ENV is set in your environment ("development") and is overriding this
-> setting. Remove the environment variable to manage this here.
-
-This prevents confusing debugging experiences where the toggle appears to do
-nothing.
-
----
-
 ## Vite Integration
 
 ### Path Resolution

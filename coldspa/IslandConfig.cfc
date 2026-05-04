@@ -1,0 +1,61 @@
+<cfcomponent output="false" hint="Singleton config for Coldspa islands. Resolves dev/prod mode and Vite port.">
+
+    <cffunction name="init" access="public" returntype="IslandConfig" output="false">
+        <cfset variables.config = resolve()>
+        <cfreturn this>
+    </cffunction>
+
+    <cffunction name="get" access="public" returntype="struct" output="false"
+                hint="Returns the resolved config struct: { isDev, vitePort }">
+        <cfreturn variables.config>
+    </cffunction>
+
+    <cffunction name="reload" access="public" returntype="struct" output="false"
+                hint="Re-resolves config from disk/env. Used by the Admin UI toggle to bust cache.">
+        <cfset variables.config = resolve()>
+        <cfreturn variables.config>
+    </cffunction>
+
+    <cffunction name="save" access="public" returntype="void" output="false"
+                hint="Persists config to /island-config.json and busts the cache.">
+        <cfargument name="newConfig" type="struct" required="true">
+        <cfset var path = expandPath("/island-config.json")>
+        <cffile action="write" file="#path#" output="#serializeJSON(arguments.newConfig)#" addnewline="false">
+        <cfset reload()>
+    </cffunction>
+
+    <!--- ===== private ===== --->
+
+    <cffunction name="resolve" access="private" returntype="struct" output="false">
+        <cfset var defaults = { "isDev": false, "vitePort": "5173" }>
+        <cfset var resolved = duplicate(defaults)>
+
+        <!--- 2nd priority: /island-config.json --->
+        <cfset var jsonPath = expandPath("/island-config.json")>
+        <cfif fileExists(jsonPath)>
+            <cftry>
+                <cfset var raw = fileRead(jsonPath)>
+                <cfset var parsed = deserializeJSON(raw)>
+                <cfif isStruct(parsed)>
+                    <cfset structAppend(resolved, parsed, true)>
+                </cfif>
+                <cfcatch type="any">
+                    <!--- malformed json: fall through to defaults --->
+                </cfcatch>
+            </cftry>
+        </cfif>
+
+        <!--- 1st priority: CF_ENV environment variable --->
+        <cfset var envName = "">
+        <cftry>
+            <cfset envName = createObject("java", "java.lang.System").getenv("CF_ENV") ?: "">
+            <cfcatch type="any"><cfset envName = ""></cfcatch>
+        </cftry>
+        <cfif len(envName)>
+            <cfset resolved.isDev = (lcase(envName) eq "development" or lcase(envName) eq "dev")>
+        </cfif>
+
+        <cfreturn resolved>
+    </cffunction>
+
+</cfcomponent>
