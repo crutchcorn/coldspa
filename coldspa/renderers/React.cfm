@@ -46,8 +46,28 @@ React = {
 
     "render": function(mountId, componentGlobKey, propsJson, resolvedClientEntry, optionsJson) {
         var jsId = arguments.mountId.replace('-', '_', 'all');
+
+        // @vitejs/plugin-react requires its Fast Refresh preamble to run
+        // before any React code. Vite normally injects it via index.html,
+        // but we render through CFML so we add it here in dev. Idempotent;
+        // safe to emit per-island.
+        var devPreamble = "";
+        if (application.coldspaConfig.isDev ?: false) {
+            var viteBase = (application.coldspaConfig.viteUrl ?: ("http://localhost:" & (application.coldspaConfig.vitePort ?: "5173")));
+            devPreamble = "
+                import RefreshRuntime from '#viteBase#/@react-refresh';
+                if (!window.__vite_plugin_react_preamble_installed__) {
+                    RefreshRuntime.injectIntoGlobalHook(window);
+                    window.$RefreshReg$ = () => {};
+                    window.$RefreshSig$ = () => (type) => type;
+                    window.__vite_plugin_react_preamble_installed__ = true;
+                }
+            ";
+        }
+
         return {
             "imports": "
+                #devPreamble#
                 import { mount as __coldspa_mount_#jsId# } from '#arguments.resolvedClientEntry#';
             ",
             "body": "

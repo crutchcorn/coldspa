@@ -1,0 +1,8 @@
+.island {
+    border: 2px solid #61dafb;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f3fbff;
+}
+.island__header { margin-bottom: 0.5rem; }
+.island__footer { margin-top: 0.75rem; color: #555; }

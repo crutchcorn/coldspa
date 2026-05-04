@@ -2,32 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Coldspa Demo</title>
+    <title>Coldspa Demos</title>
 </head>
 <body>
-    <h1>Coldspa Island Demo</h1>
-    <p>This page is rendered by ColdFusion. The widget below is a Vue island.</p>
-
-    <cfinclude template="/coldspa/renderers/Vue.cfm">
-
-    <cfscript>
-        props = {
-            "hello": "World",
-            "serverTime": dateTimeFormat(now(), "yyyy-mm-dd HH:nn:ss")
-        };
-    </cfscript>
-
-    <cf_Island
-        framework="#Vue#"
-        path="./src/App.vue"
-        props="#props#"
-        strategy="visible">
-    </cf_Island>
-
-    <hr>
-    <p><small>
-        Mode: <cfoutput>#(application.coldspaConfig.isDev ? "development" : "production")#</cfoutput>
-        | Vite port: <cfoutput>#application.coldspaConfig.vitePort#</cfoutput>
-    </small></p>
+    <h1>Coldspa Demos</h1>
+    <ul>
+        <li><a href="/demos/vue/index.cfm">Vue island demo</a></li>
+        <li><a href="/demos/react/index.cfm">React island demo</a></li>
+    </ul>
 </body>
 </html>
