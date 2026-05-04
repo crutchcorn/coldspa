@@ -22,10 +22,51 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
+      # The prewarmed Adobe CF 2025 image is multi-GB. Cache it as a tarball
+      # so reruns skip the docker pull. The :adobe2025 tag is mutable, so we
+      # bucket the cache key by ISO year+week to pick up upstream rebuilds at
+      # most once per week.
+      - name: Compute image cache key
+        id: imgkey
+        run: echo "key=adobe2025-$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache CommandBox Docker image
+        id: image-cache
+        uses: actions/cache@v5.0.5
+        with:
+          path: ~/.cache/docker-images/commandbox-adobe2025.tar
+          key: docker-image-${{ steps.imgkey.outputs.key }}
+
+      - name: Load image from cache (or pull and save)
+        run: |
+          set -euo pipefail
+          IMG="ortussolutions/commandbox:adobe2025"
+          TAR="$HOME/.cache/docker-images/commandbox-adobe2025.tar"
+          mkdir -p "$(dirname "$TAR")"
+          if [ -f "$TAR" ]; then
+            echo "Loading image from cached tarball..."
+            docker load -i "$TAR"
+          else
+            echo "Pulling $IMG..."
+            docker pull "$IMG"
+            echo "Saving image to $TAR for future runs..."
+            docker save "$IMG" -o "$TAR"
+          fi
+
+      # Cache TestBox install. modules/ only changes when box.json changes,
+      # so a single key keyed on box.json is enough.
+      - name: Cache TestBox install
+        id: testbox-cache
+        uses: actions/cache@v5.0.5
+        with:
+          path: modules
+          key: testbox-${{ hashFiles('box.json') }}
+
       # box.json declares testbox as a devDependency installed under
       # modules/testbox/. The runner's Application.cfc maps /testbox to
       # that location, so the spec runner can resolve testbox.system.BaseSpec.
       - name: Install TestBox via CommandBox
+        if: steps.testbox-cache.outputs.cache-hit != 'true'
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/app" \
