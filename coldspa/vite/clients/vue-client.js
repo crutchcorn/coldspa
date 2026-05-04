@@ -24,12 +24,19 @@ export async function mount(componentPath, el, props, options) {
     }
     const mod = await loader();
 
-    let slots;
+    const slots = {};
     if (options && options.hasSlot && options.slotId) {
         const tpl = document.getElementById(options.slotId);
         const slotHtml = tpl ? tpl.innerHTML : '';
         if (slotHtml) {
-            slots = { default: () => createStaticVNode(slotHtml, 1) };
+            slots.default = () => createStaticVNode(slotHtml, 1);
+        }
+    }
+    if (options && options.namedSlotIds) {
+        for (const [name, id] of Object.entries(options.namedSlotIds)) {
+            const tpl = document.getElementById(id);
+            const html = tpl ? tpl.innerHTML : '';
+            if (html) slots[name] = () => createStaticVNode(html, 1);
         }
     }
 

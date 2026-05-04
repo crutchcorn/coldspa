@@ -29,14 +29,29 @@ export async function mount(componentPath, el, props, options) {
         const tpl = document.getElementById(options.slotId);
         const slotHtml = tpl ? tpl.innerHTML : '';
         if (slotHtml) {
-            // Wrapper span so the component can decide where children go.
             children = React.createElement('span', {
                 dangerouslySetInnerHTML: { __html: slotHtml }
             });
         }
     }
 
-    const node = React.createElement(mod.default, props, children);
+    // Named slots become React props of the same name. Each is a span with
+    // dangerouslySetInnerHTML so the component can drop it anywhere via
+    // {props.header} etc.
+    const slotProps = {};
+    if (options && options.namedSlotIds) {
+        for (const [name, id] of Object.entries(options.namedSlotIds)) {
+            const tpl = document.getElementById(id);
+            const html = tpl ? tpl.innerHTML : '';
+            if (html) {
+                slotProps[name] = React.createElement('span', {
+                    dangerouslySetInnerHTML: { __html: html }
+                });
+            }
+        }
+    }
+
+    const node = React.createElement(mod.default, { ...props, ...slotProps }, children);
     if (options && options.strategy === 'client') {
         createRoot(el).render(node);
     } else {

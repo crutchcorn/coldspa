@@ -22,12 +22,18 @@
 <cfparam name="attributes.strategy" type="string" default="load">
 
 <cfscript>
-// Run on the END pass so thisTag.generatedContent contains the rendered
-// children (the "default slot"). The start pass exits early via exitTemplate
-// so the body still executes and CF still invokes us again in end mode.
-// (exit "exitTag" would skip both the body AND the end-mode invocation.)
-if (thisTag.executionMode neq "end") {
+// Initialize named-slot bag in START mode so child <cf_Slot> tags can attach
+// to it via getBaseTagData("CF_ISLAND") during body execution. The struct
+// persists into END mode (custom tag variables scope is shared across both).
+if (thisTag.executionMode eq "start") {
+    namedSlots = {};
     exit "exitTemplate";
+}
+
+// END pass: thisTag.generatedContent holds the default-slot HTML; namedSlots
+// (populated by any <cf_Slot> children) holds the named ones.
+if (!structKeyExists(variables, "namedSlots")) {
+    namedSlots = {};
 }
 
 slotHtml = trim(thisTag.generatedContent);
@@ -100,7 +106,7 @@ ssrHtml  = "";
 ssrCss   = "";
 ssrError = "";
 if (!clientOnly && structKeyExists(attributes.framework, "ssrRender")) {
-    ssrResult = attributes.framework.ssrRender(componentGlobKey, attributes.props, slotHtml);
+    ssrResult = attributes.framework.ssrRender(componentGlobKey, attributes.props, slotHtml, namedSlots);
     if (isStruct(ssrResult)) {
         ssrHtml  = ssrResult.html  ?: "";
         ssrCss   = ssrResult.css   ?: "";
@@ -110,13 +116,21 @@ if (!clientOnly && structKeyExists(attributes.framework, "ssrRender")) {
     }
 }
 
+// Build a map of slot-name -> <template> id so the client can pluck each one
+// out of the DOM when mounting. Default slot uses the bare slotId.
+namedSlotIds = {};
+for (slotName in namedSlots) {
+    namedSlotIds[slotName] = "slot-" & uid & "-" & slotName;
+}
+
 // Options the client mount() sees. slotId tells the client where to find the
 // <template> stash containing the slot HTML. hasSlot is a quick check so the
 // client can skip DOM lookup when there's nothing to slot.
 mountOptionsJson = serializeJSON({
-    "strategy": attributes.strategy,
-    "slotId":   slotId,
-    "hasSlot":  len(slotHtml) gt 0
+    "strategy":     attributes.strategy,
+    "slotId":       slotId,
+    "hasSlot":      len(slotHtml) gt 0,
+    "namedSlotIds": namedSlotIds
 });
 
 rendered = attributes.framework.render(mountId, componentGlobKey, propsJson, resolvedClientEntry, mountOptionsJson);
@@ -151,7 +165,7 @@ if (!cfg.isDev && len(ssrHtml) && structKeyExists(attributes.framework, "clientE
      and assign it back to thisTag.generatedContent rather than emitting
      directly (which would land inside the surrounding <cfoutput>'s output
      position, but `<cf_Island>...</cf_Island>` itself is the output). --->
-<cfsavecontent variable="islandOutput"><cfoutput><cfif (cfg.debug ?: false)><cfif clientOnly><!-- coldspa SSR: skipped (strategy="client") --><cfelseif len(ssrError)><!-- coldspa SSR error: #encodeForHTML(ssrError)# --><cfelseif not len(ssrHtml)><!-- coldspa SSR: empty html, no error reported --><cfelse><!-- coldspa SSR: ok (#len(ssrHtml)# bytes, #len(ssrCss)# css bytes, #len(slotHtml)# slot bytes) --></cfif></cfif><cfif len(ssrCss)><style data-coldspa-ssr="#mountId#">#ssrCss#</style></cfif><cfloop array="#ssrCssLinks#" index="cssHref"><link rel="stylesheet" href="#cssHref#" data-coldspa-ssr="#mountId#"></cfloop><cfif len(slotHtml)><template id="#slotId#" data-coldspa-slot="#mountId#">#slotHtml#</template></cfif><div id="#mountId#" data-coldspa-island="#attributes.framework.name#">#ssrHtml#</div><cfswitch expression="#attributes.strategy#"><cfcase value="load,client" delimiters=",">
+<cfsavecontent variable="islandOutput"><cfoutput><cfif (cfg.debug ?: false)><cfif clientOnly><!-- coldspa SSR: skipped (strategy="client") --><cfelseif len(ssrError)><!-- coldspa SSR error: #encodeForHTML(ssrError)# --><cfelseif not len(ssrHtml)><!-- coldspa SSR: empty html, no error reported --><cfelse><!-- coldspa SSR: ok (#len(ssrHtml)# bytes, #len(ssrCss)# css bytes, #len(slotHtml)# slot bytes) --></cfif></cfif><cfif len(ssrCss)><style data-coldspa-ssr="#mountId#">#ssrCss#</style></cfif><cfloop array="#ssrCssLinks#" index="cssHref"><link rel="stylesheet" href="#cssHref#" data-coldspa-ssr="#mountId#"></cfloop><cfif len(slotHtml)><template id="#slotId#" data-coldspa-slot="#mountId#">#slotHtml#</template></cfif><cfloop collection="#namedSlots#" item="slotName"><template id="#namedSlotIds[slotName]#" data-coldspa-slot="#mountId#" data-coldspa-slot-name="#slotName#">#namedSlots[slotName]#</template></cfloop><div id="#mountId#" data-coldspa-island="#attributes.framework.name#">#ssrHtml#</div><cfswitch expression="#attributes.strategy#"><cfcase value="load,client" delimiters=",">
 <script type="module">
 #bootImports#
 #bootBody#

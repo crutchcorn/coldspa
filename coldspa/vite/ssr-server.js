@@ -156,9 +156,9 @@ const server = createHttpServer(async (req, res) => {
     const framework = m[1];
 
     try {
-        const { componentPath, props, slotHtml } = await readJsonBody(req);
+        const { componentPath, props, slotHtml, namedSlots } = await readJsonBody(req);
         const renderer = await getRenderer(framework);
-        const html = await renderer.render(componentPath, props ?? {}, slotHtml ?? '');
+        const html = await renderer.render(componentPath, props ?? {}, slotHtml ?? '', namedSlots ?? {});
         // Dev: collect inline CSS so the page has component styles before
         // hydration. Prod: handled via <link> from the client manifest.
         const css = IS_PROD ? '' : await collectCssDev(componentPath);
