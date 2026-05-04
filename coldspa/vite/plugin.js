@@ -41,9 +41,10 @@ const FRAMEWORK_CLIENTS = {
     react: toViteId(resolve(__dirname, 'clients/react-client.js'))
 };
 
-// SSR entries (only Vue is implemented today; React SSR is a TODO).
+// SSR entries -- one per framework that supports server rendering.
 const FRAMEWORK_SSR = {
-    vue: toViteId(resolve(__dirname, 'clients/vue-ssr.js'))
+    vue:   toViteId(resolve(__dirname, 'clients/vue-ssr.js')),
+    react: toViteId(resolve(__dirname, 'clients/react-ssr.js'))
 };
 
 const DEFAULT_GLOBS = {

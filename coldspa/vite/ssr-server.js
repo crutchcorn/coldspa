@@ -34,10 +34,12 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 
 // Map :framework path segment -> SSR module entry path / id
 const SSR_ENTRIES_DEV = {
-    vue: '/coldspa/vite/clients/vue-ssr.js'
+    vue:   '/coldspa/vite/clients/vue-ssr.js',
+    react: '/coldspa/vite/clients/react-ssr.js'
 };
 const SSR_ENTRIES_PROD = {
-    vue: resolve(PROJECT_ROOT, 'dist-ssr', 'vue-ssr.js')
+    vue:   resolve(PROJECT_ROOT, 'dist-ssr', 'vue-ssr.js'),
+    react: resolve(PROJECT_ROOT, 'dist-ssr', 'react-ssr.js')
 };
 
 // --- module loading -----------------------------------------------------
