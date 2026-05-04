@@ -103,7 +103,7 @@ A singleton CFC that owns all config resolution with the following precedence:
 ```
 CF_ENV environment variable   ← highest priority (CI/CD, Docker)
         ↓ fallback
-/island-config.json           ← written by CF Admin UI toggle
+/coldspa.config.json           ← written by CF Admin UI toggle
         ↓ fallback
 "production"                  ← safe default
 ```
@@ -124,7 +124,7 @@ CF_ENV environment variable   ← highest priority (CI/CD, Docker)
 - Saving via the Admin UI busts `application.islandConfig` immediately so
   changes take effect without a server restart
 
-### `island-config.json`
+### `coldspa.config.json`
 
 - Should be in `.gitignore` — not committed to source control
 - Written by the CF Admin toggle, not by hand

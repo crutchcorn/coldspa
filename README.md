@@ -46,7 +46,7 @@ Use `client` for components that depend on browser-only APIs (window, IndexedDB,
 Coldspa resolves config in this order (highest priority first):
 
 1. **Environment variables** — for CI/CD, Docker, prod
-2. **`island-config.json`** in the webroot — for local dev / Admin UI
+2. **`coldspa.config.json`** in the webroot — for local dev / Admin UI
 3. **Built-in defaults**
 
 ### Environment variables
@@ -61,7 +61,7 @@ Coldspa resolves config in this order (highest priority first):
 | `COLDSPA_SSR_HOST`  | (sidecar) Bind address. Default `0.0.0.0`. Use `127.0.0.1` to lock down  |
 | `NODE_ENV`          | (sidecar) `production` switches sidecar to use built bundle              |
 
-### `island-config.json`
+### `coldspa.config.json`
 
 Lives in the webroot. Should be `.gitignore`d (it can be edited via the CF Admin UI). Any keys you set here are merged on top of defaults but overridden by env vars.
 
@@ -83,7 +83,7 @@ Lives in the webroot. Should be `.gitignore`d (it can be edited via the CF Admin
 | `viteUrl`  | unset                    | Browser-facing Vite URL. Falls back to `localhost:vitePort` |
 | `vitePort` | `"5173"`                 | Used to build the default `viteUrl` if `viteUrl` is unset   |
 
-After editing `island-config.json`, request any page with `?reloadApp=1` to bust the cached config (or restart CF).
+After editing `coldspa.config.json`, request any page with `?reloadApp=1` to bust the cached config (or restart CF).
 
 ### Docker / cross-host setups
 

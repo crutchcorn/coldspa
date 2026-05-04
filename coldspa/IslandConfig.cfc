@@ -17,9 +17,9 @@
     </cffunction>
 
     <cffunction name="save" access="public" returntype="void" output="false"
-                hint="Persists config to /island-config.json and busts the cache.">
+                hint="Persists config to /coldspa.config.json and busts the cache.">
         <cfargument name="newConfig" type="struct" required="true">
-        <cfset var path = expandPath("/island-config.json")>
+        <cfset var path = expandPath("/coldspa.config.json")>
         <cffile action="write" file="#path#" output="#serializeJSON(arguments.newConfig)#" addnewline="false">
         <cfset reload()>
     </cffunction>
@@ -30,8 +30,8 @@
         <cfset var defaults = { "isDev": false, "debug": false, "vitePort": "5173", "ssrUrl": "http://127.0.0.1:5174" }>
         <cfset var resolved = duplicate(defaults)>
 
-        <!--- 2nd priority: /island-config.json --->
-        <cfset var jsonPath = expandPath("/island-config.json")>
+        <!--- 2nd priority: /coldspa.config.json --->
+        <cfset var jsonPath = expandPath("/coldspa.config.json")>
         <cfif fileExists(jsonPath)>
             <cftry>
                 <cfset var raw = fileRead(jsonPath)>

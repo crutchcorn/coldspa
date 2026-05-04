@@ -4,4 +4,4 @@ crossdomain.xml
 node_modules/
 dist/
 dist-ssr/
-island-config.json
+coldspa.config.json

@@ -84,7 +84,7 @@ function renderGlobLiteral(glob) {
 //
 // Sources, highest priority first:
 //   1. COLDSPA_VITE_URL env var
-//   2. island-config.json -> viteUrl
+//   2. coldspa.config.json -> viteUrl
 //
 // Returns { hostname, needsExternal } or null if only localhost is in use.
 function discoverExternalHost(projectRoot) {
@@ -92,7 +92,7 @@ function discoverExternalHost(projectRoot) {
     if (process.env.COLDSPA_VITE_URL) {
         sources.push(process.env.COLDSPA_VITE_URL);
     }
-    const cfgPath = resolve(projectRoot, 'island-config.json');
+    const cfgPath = resolve(projectRoot, 'coldspa.config.json');
     if (existsSync(cfgPath)) {
         try {
             const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
