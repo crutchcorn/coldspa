@@ -1,9 +1,19 @@
 // Coldspa React client entry.
-// Served/bundled by Vite so bare `react` and `react-dom/client` specifiers resolve.
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
-export function mount(Component, el, props) {
+const components = import.meta.glob('/src/**/*.{jsx,tsx}');
+
+export async function mount(componentPath, el, props) {
     if (!el) return;
-    createRoot(el).render(React.createElement(Component, props));
+    const loader = components[componentPath];
+    if (!loader) {
+        console.error(
+            `[Coldspa] No React component registered for path "${componentPath}". ` +
+            `Make sure it matches the glob in coldspa/renderers/react-client.js.`
+        );
+        return;
+    }
+    const mod = await loader();
+    createRoot(el).render(React.createElement(mod.default, props));
 }

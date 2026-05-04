@@ -74,17 +74,22 @@ function resolveAsset(required string path) {
 uid          = lcase(replace(createUUID(), "-", "", "all"));
 mountId      = "island-" & uid;        // DOM id (hyphens fine)
 jsId         = "island_" & uid;        // JS-identifier-safe (no hyphens)
-resolvedPath = resolveAsset(attributes.path);
-propsJson    = serializeJSON(attributes.props);
 
-// Resolve the renderer's client-entry shim through the same Vite-aware path resolver.
-// Renderers SHOULD declare `clientEntry`; tolerate older renderers that don't.
+// Component is loaded dynamically by the framework's client entry via
+// import.meta.glob, so we don't resolve it through Vite ourselves -- we just
+// normalize the path to a glob key (e.g. "./src/App.vue" -> "/src/App.vue").
+componentGlobKey = reReplace(attributes.path, "^\./", "/");
+
+propsJson = serializeJSON(attributes.props);
+
+// The client entry (the JS shim with the bare `vue` import) IS resolved through
+// Vite, since it's a real JS file Vite serves/bundles.
 resolvedClientEntry = "";
 if (structKeyExists(attributes.framework, "clientEntry")) {
     resolvedClientEntry = resolveAsset(attributes.framework.clientEntry);
 }
 
-rendered = attributes.framework.render(mountId, resolvedPath, propsJson, resolvedClientEntry);
+rendered = attributes.framework.render(mountId, componentGlobKey, propsJson, resolvedClientEntry);
 
 // Backwards-compat: allow renderers that still return a plain string (treated as body, no imports)
 if (isSimpleValue(rendered)) {
