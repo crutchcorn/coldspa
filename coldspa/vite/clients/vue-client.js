@@ -1,7 +1,8 @@
 // Coldspa Vue client entry. Bundled by Vite via the coldspa plugin.
+// __COLDSPA_GLOB__ is replaced at build time by the plugin's transform hook.
 import { createApp } from 'vue';
 
-const components = import.meta.glob('/src/**/*.vue');
+const components = import.meta.glob('__COLDSPA_GLOB__');
 
 export async function mount(componentPath, el, props) {
     if (!el) return;
