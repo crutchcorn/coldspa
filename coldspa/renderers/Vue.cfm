@@ -5,7 +5,7 @@
 <cfscript>
 Vue = {
     "name": "Vue",
-    "clientEntry": "./coldspa/renderers/vue-client.js",
+    "clientEntry": "./coldspa/vite/clients/vue-client.js",
     "render": function(mountId, componentGlobKey, propsJson, resolvedClientEntry) {
         var jsId = arguments.mountId.replace('-', '_', 'all');
         return {

@@ -5,7 +5,7 @@
 <cfscript>
 React = {
     "name": "React",
-    "clientEntry": "./coldspa/renderers/react-client.js",
+    "clientEntry": "./coldspa/vite/clients/react-client.js",
     "render": function(mountId, componentGlobKey, propsJson, resolvedClientEntry) {
         var jsId = arguments.mountId.replace('-', '_', 'all');
         return {

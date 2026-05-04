@@ -1,4 +1,4 @@
-// Coldspa React client entry.
+// Coldspa React client entry. Bundled by Vite via the coldspa plugin.
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -10,7 +10,7 @@ export async function mount(componentPath, el, props) {
     if (!loader) {
         console.error(
             `[Coldspa] No React component registered for path "${componentPath}". ` +
-            `Make sure it matches the glob in coldspa/renderers/react-client.js.`
+            `Make sure it matches the glob configured in the coldspa Vite plugin.`
         );
         return;
     }

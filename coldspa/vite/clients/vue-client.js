@@ -1,9 +1,6 @@
-// Coldspa Vue client entry.
-// Uses import.meta.glob so Vite knows about all island components at build time
-// and bundles each as its own dynamic chunk. In dev, Vite serves them directly.
+// Coldspa Vue client entry. Bundled by Vite via the coldspa plugin.
 import { createApp } from 'vue';
 
-// Match any .vue under src/. Adjust the glob if you keep components elsewhere.
 const components = import.meta.glob('/src/**/*.vue');
 
 export async function mount(componentPath, el, props) {
@@ -12,7 +9,7 @@ export async function mount(componentPath, el, props) {
     if (!loader) {
         console.error(
             `[Coldspa] No Vue component registered for path "${componentPath}". ` +
-            `Make sure it matches the glob in coldspa/renderers/vue-client.js.`
+            `Make sure it matches the glob configured in the coldspa Vite plugin.`
         );
         return;
     }
