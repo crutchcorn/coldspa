@@ -107,15 +107,38 @@ bootBody    = rendered.body;
 // available, we just emit an empty div and the client mounts fresh -- so the
 // page works either way (just no JS-off rendering in that case).
 ssrHtml  = "";
+ssrCss   = "";
 ssrError = "";
 if (structKeyExists(attributes.framework, "ssrRender")) {
     ssrResult = attributes.framework.ssrRender(componentGlobKey, attributes.props);
     // Tolerate older renderers that returned a plain string.
     if (isStruct(ssrResult)) {
         ssrHtml  = ssrResult.html  ?: "";
+        ssrCss   = ssrResult.css   ?: "";
         ssrError = ssrResult.error ?: "";
     } else {
         ssrHtml = ssrResult;
+    }
+}
+
+// In prod the SSR sidecar can't easily inline component CSS (the SSR build
+// doesn't emit CSS), so we surface it as <link> tags from the client manifest.
+// Each chunk in the manifest carries a `css` array of hashed asset filenames.
+ssrCssLinks = [];
+if (!cfg.isDev && len(ssrHtml) && structKeyExists(attributes.framework, "clientEntry")) {
+    try {
+        manifestPath = expandPath("/dist/.vite/manifest.json");
+        if (fileExists(manifestPath)) {
+            manifest = deserializeJSON(fileRead(manifestPath));
+            entryKey = reReplace(attributes.framework.clientEntry, "^\./", "");
+            if (structKeyExists(manifest, entryKey) && structKeyExists(manifest[entryKey], "css")) {
+                for (cssFile in manifest[entryKey].css) {
+                    arrayAppend(ssrCssLinks, "/dist/" & cssFile);
+                }
+            }
+        }
+    } catch (any e) {
+        // non-fatal: we'll just have a brief FOUC
     }
 }
 </cfscript>
@@ -126,8 +149,17 @@ if (structKeyExists(attributes.framework, "ssrRender")) {
 <cfelseif not len(ssrHtml)>
     <cfoutput><!-- coldspa SSR: empty html, no error reported (renderer may not implement ssrRender) --></cfoutput>
 <cfelse>
-    <cfoutput><!-- coldspa SSR: ok (#len(ssrHtml)# bytes) --></cfoutput>
+    <cfoutput><!-- coldspa SSR: ok (#len(ssrHtml)# bytes, #len(ssrCss)# css bytes) --></cfoutput>
 </cfif>
+
+<!--- Inline scoped/component CSS (dev) so styles are present pre-hydration. --->
+<cfif len(ssrCss)>
+    <cfoutput><style data-coldspa-ssr="#mountId#">#ssrCss#</style></cfoutput>
+</cfif>
+<!--- In prod, link the bundled CSS for the client entry. --->
+<cfloop array="#ssrCssLinks#" index="cssHref">
+    <cfoutput><link rel="stylesheet" href="#cssHref#" data-coldspa-ssr="#mountId#"></cfoutput>
+</cfloop>
 
 <!--- Mount point (contains SSR HTML if available, for hydration) --->
 <div id="<cfoutput>#mountId#</cfoutput>" data-coldspa-island="<cfoutput>#attributes.framework.name#</cfoutput>"><cfoutput>#ssrHtml#</cfoutput></div>

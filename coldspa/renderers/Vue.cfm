@@ -26,14 +26,19 @@ Vue = {
             }
             if (find("200", local.resp.statusCode)) {
                 var parsed = deserializeJSON(local.resp.fileContent);
-                return { "html": parsed.html ?: "", "error": "" };
+                return {
+                    "html":  parsed.html ?: "",
+                    "css":   parsed.css  ?: "",
+                    "error": ""
+                };
             }
             return {
-                "html": "",
+                "html":  "",
+                "css":   "",
                 "error": "SSR sidecar returned " & local.resp.statusCode & ": " & left(local.resp.fileContent, 500)
             };
         } catch (any e) {
-            return { "html": "", "error": "SSR call failed: " & e.message };
+            return { "html": "", "css": "", "error": "SSR call failed: " & e.message };
         }
     },
 

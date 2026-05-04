@@ -5,22 +5,21 @@
 // Endpoints:
 //   POST /render/:framework
 //     body: { componentPath: string, props: object }
-//     200:  { html: string }
+//     200:  { html: string, css: string }
 //     500:  { error: string }
 //
 // Modes:
 //   - dev   (default if NODE_ENV !== 'production'): uses Vite's middleware-mode
 //           dev server + ssrLoadModule. Picks up component changes without
-//           rebuilding.
+//           rebuilding. Component CSS is collected from Vite's module graph
+//           and returned in the `css` field so CF can inline a <style> tag.
 //   - prod: imports the built bundle from dist-ssr/ directly. Run
-//           `npm run build:ssr` first.
+//           `npm run build:ssr` first. CSS is served via <link> tags from the
+//           client manifest (handled in Island.cfm).
 //
 // Env:
 //   COLDSPA_SSR_PORT   default 5174
-//   COLDSPA_SSR_HOST   default 0.0.0.0  (bind on all interfaces so CF running
-//                                        in a container or on another machine
-//                                        can reach the sidecar; restrict to
-//                                        '127.0.0.1' for single-host dev)
+//   COLDSPA_SSR_HOST   default 0.0.0.0
 //   NODE_ENV           'production' switches to prod mode
 
 import { createServer as createHttpServer } from 'http';
@@ -51,12 +50,10 @@ async function getRenderer(framework) {
         if (prodModuleCache[framework]) return prodModuleCache[framework];
         const path = SSR_ENTRIES_PROD[framework];
         if (!path) throw new Error(`Unknown framework "${framework}"`);
-        // pathToFileURL so dynamic import works on Windows.
         const mod = await import(pathToFileURL(path).href);
         prodModuleCache[framework] = mod;
         return mod;
     }
-    // Dev: lazy-init Vite middleware-mode server, ssrLoadModule per request.
     if (!viteDevServer) {
         const { createServer } = await import('vite');
         viteDevServer = await createServer({
@@ -68,6 +65,72 @@ async function getRenderer(framework) {
     const id = SSR_ENTRIES_DEV[framework];
     if (!id) throw new Error(`Unknown framework "${framework}"`);
     return await viteDevServer.ssrLoadModule(id);
+}
+
+// --- CSS collection (dev) -----------------------------------------------
+
+function isCssId(s) {
+    if (!s) return false;
+    return /\.(css|scss|sass|less|styl|stylus|pcss|postcss)($|\?)/.test(s)
+        || /[?&]lang\.(css|scss|sass|less|styl|stylus|pcss|postcss)/.test(s)
+        || /[?&]vue&type=style/.test(s);
+}
+
+function unquote(literal) {
+    // Decode a JS source-level string/template literal.
+    try { return Function(`return (${literal})`)(); } catch { return ''; }
+}
+
+function extractCssFromModule(code) {
+    // Vite's CSS HMR module wraps the raw CSS in __vite__updateStyle(id, "...").
+    let m = code.match(/__vite__updateStyle\([^,]+,\s*((?:`|")[\s\S]*?(?:`|"))\)/);
+    if (m) return unquote(m[1]) || '';
+    // Fallback for other shapes Vite may emit.
+    m = code.match(/const\s+__vite__css\s*=\s*((?:`|")[\s\S]*?(?:`|"))/);
+    if (m) return unquote(m[1]) || '';
+    return '';
+}
+
+// Walks the SSR module graph from a given component URL and returns the
+// concatenated CSS of every (transitively) imported style module. Without
+// this, scoped Vue styles flash in only after the client bundle hydrates.
+async function collectCssDev(componentPath) {
+    if (!viteDevServer) return '';
+    // Make sure the module is in the SSR graph.
+    try { await viteDevServer.ssrLoadModule(componentPath); } catch { /* ignore */ }
+
+    const root = await viteDevServer.moduleGraph.getModuleByUrl(componentPath, true);
+    if (!root) return '';
+
+    const styles = new Map();
+    const seen = new Set();
+
+    async function walk(mod) {
+        if (!mod) return;
+        const key = mod.id || mod.url;
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+
+        if (isCssId(mod.id) || isCssId(mod.url)) {
+            try {
+                const r = await viteDevServer.transformRequest(mod.url || mod.id, { ssr: false });
+                if (r && r.code) {
+                    const css = extractCssFromModule(r.code);
+                    if (css) styles.set(key, css);
+                }
+            } catch {
+                // ignore transform errors -- skip this file
+            }
+        }
+
+        const next = mod.ssrImportedModules || mod.importedModules;
+        if (next) {
+            for (const child of next) await walk(child);
+        }
+    }
+
+    await walk(root);
+    return Array.from(styles.values()).join('\n');
 }
 
 // --- http ---------------------------------------------------------------
@@ -96,10 +159,12 @@ const server = createHttpServer(async (req, res) => {
         const { componentPath, props } = await readJsonBody(req);
         const renderer = await getRenderer(framework);
         const html = await renderer.render(componentPath, props ?? {});
+        // Dev: collect inline CSS so the page has component styles before
+        // hydration. Prod: handled via <link> from the client manifest.
+        const css = IS_PROD ? '' : await collectCssDev(componentPath);
         res.setHeader('content-type', 'application/json');
-        res.end(JSON.stringify({ html }));
+        res.end(JSON.stringify({ html, css }));
     } catch (err) {
-        // Log full stack server-side; send a short message to CF.
         console.error('[coldspa-ssr]', err);
         res.statusCode = 500;
         res.setHeader('content-type', 'application/json');
