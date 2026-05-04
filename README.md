@@ -98,6 +98,7 @@ npm run ssr:prod   # runs the sidecar against the built bundle
 
 ## Documentation
 
+- [Getting started](docs/getting-started.md) — full setup walkthrough
 - [Hydration strategies](docs/hydration-strategies.md) — `load`, `idle`, `visible`, `client`
 - [Slots](docs/slots.md) — default + named slots, `cf_Slot`, gotchas
 - [Configuration](docs/configuration.md) — `coldspa.config.json`, env vars
