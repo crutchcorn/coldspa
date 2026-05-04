@@ -16,6 +16,12 @@
 
 <hr />
 
+[![Build Status](https://img.shields.io/github/actions/workflow/status/crutchcorn/coldspa/ci.yml?branch=main&style=flat-square&label=Tests)](https://github.com/crutchcorn/coldspa/actions/workflows/ci.yml?query=branch%3Amain)
+[![ForgeBox](https://img.shields.io/badge/ForgeBox-coldspa-2D3D55?style=flat-square&logoColor=white)](https://www.forgebox.io/view/coldspa)
+[![NPM Version](https://img.shields.io/npm/v/coldspa?style=flat-square&label=NPM)](https://www.npmjs.com/package/coldspa)
+[![NPM downloads](https://img.shields.io/npm/dw/coldspa?style=flat-square&label=NPM%20Downloads)](https://www.npmjs.com/package/coldspa)
+[![MIT License](https://img.shields.io/npm/l/coldspa?style=flat-square&label=License)](./LICENSE)
+
 Mount Vue or React components into CFML pages with server-side rendering and progressive hydration.
 
 ## Install
