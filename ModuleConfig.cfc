@@ -16,7 +16,7 @@ component {
     this.author      = "crutchcorn";
     this.webURL      = "https://github.com/crutchcorn/coldspa";
     this.description = "Give your CFML a spa day. The Islands Architecture for ColdFusion.";
-    this.version     = "0.1.0";
+    this.version     = "0.2.0";
     this.autoMapping = true;
     this.entryPoint  = "coldspa";
     this.modelNamespace = "coldspa";
