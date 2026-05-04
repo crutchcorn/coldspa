@@ -10,6 +10,11 @@
         props      (struct, optional)  - props passed to the component (default {})
         strategy   (string, optional)  - "load" | "idle" | "visible" | "client" (default "load")
                                          "client" skips SSR entirely (no server HTML, no CSS pre-render)
+
+    Body / slots:
+        Anything between <cf_Island> and </cf_Island> is captured (after CFML
+        evaluation) and passed to the component as its default slot. Use a
+        <slot /> in your Vue component (or {children} in React) to render it.
 --->
 <cfparam name="attributes.framework" type="struct">
 <cfparam name="attributes.path" type="string">
@@ -17,10 +22,17 @@
 <cfparam name="attributes.strategy" type="string" default="load">
 
 <cfscript>
-// Custom tags execute twice (start + end). Only emit on start.
-if (thisTag.executionMode neq "start") {
-    exit "exitTag";
+// Run on the END pass so thisTag.generatedContent contains the rendered
+// children (the "default slot"). The start pass exits early via exitTemplate
+// so the body still executes and CF still invokes us again in end mode.
+// (exit "exitTag" would skip both the body AND the end-mode invocation.)
+if (thisTag.executionMode neq "end") {
+    exit "exitTemplate";
 }
+
+slotHtml = trim(thisTag.generatedContent);
+// Reset; we'll write the full island markup back at the end.
+thisTag.generatedContent = "";
 
 // --- validate strategy
 validStrategies = ["load", "idle", "visible", "client"];
@@ -31,10 +43,8 @@ if (!arrayFindNoCase(validStrategies, attributes.strategy)) {
     );
 }
 
-// "client" strategy is client-only: skip SSR entirely.
 clientOnly = (attributes.strategy == "client");
 
-// --- validate renderer shape
 if (!structKeyExists(attributes.framework, "render") || !isCustomFunction(attributes.framework.render)) {
     throw(
         type    = "Coldspa.InvalidRenderer",
@@ -42,24 +52,17 @@ if (!structKeyExists(attributes.framework, "render") || !isCustomFunction(attrib
     );
 }
 
-// --- resolve config (lazy fallback if Application.cfc didn't wire it)
 if (!structKeyExists(application, "coldspaConfig")) {
     application.coldspaConfig = new coldspa.ColdspaConfig().get();
 }
 cfg = application.coldspaConfig;
 
-// --- resolve asset path (dev: vite server URL; prod: manifest lookup)
 function resolveAsset(required string path) {
     if (cfg.isDev) {
-        // Strip leading "./" so we get a clean URL join
         var clean = reReplace(arguments.path, "^\./", "");
-        // viteUrl override (from COLDSPA_VITE_URL env) lets the browser reach
-        // a Vite dev server that isn't on localhost (e.g. host.docker.internal).
         var viteBase = cfg.viteUrl ?: ("http://localhost:" & cfg.vitePort);
         return viteBase & "/" & clean;
     }
-
-    // Production: look up content-hashed file in vite manifest
     var manifestPath = expandPath("/dist/.vite/manifest.json");
     if (!fileExists(manifestPath)) {
         throw(
@@ -81,32 +84,23 @@ function resolveAsset(required string path) {
 uid          = lcase(replace(createUUID(), "-", "", "all"));
 mountId      = "island-" & uid;        // DOM id (hyphens fine)
 jsId         = "island_" & uid;        // JS-identifier-safe (no hyphens)
+slotId       = "slot-"   & uid;        // <template> id for client slot retrieval
 
-// Component is loaded dynamically by the framework's client entry via
-// import.meta.glob, so we don't resolve it through Vite ourselves -- we just
-// normalize the path to a glob key (e.g. "./src/App.vue" -> "/src/App.vue").
 componentGlobKey = reReplace(attributes.path, "^\./", "/");
-
 propsJson = serializeJSON(attributes.props);
 
-// The client entry (the JS shim with the bare `vue` import) IS resolved through
-// Vite, since it's a real JS file Vite serves/bundles.
 resolvedClientEntry = "";
 if (structKeyExists(attributes.framework, "clientEntry")) {
     resolvedClientEntry = resolveAsset(attributes.framework.clientEntry);
 }
 
-// Server-side rendering. If the renderer supports ssrRender(), call the SSR
-// sidecar and embed the returned HTML inside the mount div. The client uses
-// the hydrate flag (computed from whether SSR actually produced HTML) to pick
-// between hydrate-mode and fresh client-mount APIs. If SSR fails or isn't
-// available, the page still works -- just no pre-rendered markup.
+// Server-side rendering. Slots are passed through so the SSR output and the
+// client hydration agree byte-for-byte.
 ssrHtml  = "";
 ssrCss   = "";
 ssrError = "";
 if (!clientOnly && structKeyExists(attributes.framework, "ssrRender")) {
-    ssrResult = attributes.framework.ssrRender(componentGlobKey, attributes.props);
-    // Tolerate older renderers that returned a plain string.
+    ssrResult = attributes.framework.ssrRender(componentGlobKey, attributes.props, slotHtml);
     if (isStruct(ssrResult)) {
         ssrHtml  = ssrResult.html  ?: "";
         ssrCss   = ssrResult.css   ?: "";
@@ -116,26 +110,24 @@ if (!clientOnly && structKeyExists(attributes.framework, "ssrRender")) {
     }
 }
 
-// Build the options object passed to the client's mount() function. The
-// client uses `strategy` to decide between hydrate-mode and fresh-mount APIs;
-// SSR is skipped entirely above when strategy="client", so anything else
-// implies SSR markup is present.
+// Options the client mount() sees. slotId tells the client where to find the
+// <template> stash containing the slot HTML. hasSlot is a quick check so the
+// client can skip DOM lookup when there's nothing to slot.
 mountOptionsJson = serializeJSON({
-    "strategy": attributes.strategy
+    "strategy": attributes.strategy,
+    "slotId":   slotId,
+    "hasSlot":  len(slotHtml) gt 0
 });
 
 rendered = attributes.framework.render(mountId, componentGlobKey, propsJson, resolvedClientEntry, mountOptionsJson);
 
-// Backwards-compat: allow renderers that still return a plain string (treated as body, no imports)
 if (isSimpleValue(rendered)) {
     rendered = { "imports": "", "body": rendered };
 }
 bootImports = rendered.imports;
 bootBody    = rendered.body;
 
-// In prod the SSR sidecar can't easily inline component CSS (the SSR build
-// doesn't emit CSS), so we surface it as <link> tags from the client manifest.
-// Each chunk in the manifest carries a `css` array of hashed asset filenames.
+// In prod the SSR build doesn't emit CSS; surface client-bundle CSS as <link>.
 ssrCssLinks = [];
 if (!cfg.isDev && len(ssrHtml) && structKeyExists(attributes.framework, "clientEntry")) {
     try {
@@ -150,46 +142,21 @@ if (!cfg.isDev && len(ssrHtml) && structKeyExists(attributes.framework, "clientE
             }
         }
     } catch (any e) {
-        // non-fatal: we'll just have a brief FOUC
+        // non-fatal: brief FOUC is acceptable
     }
 }
 </cfscript>
 
-<!--- Surface SSR failures so they aren't silently swallowed (debug only). --->
-<cfif (cfg.debug ?: false)>
-    <cfif clientOnly>
-        <cfoutput><!-- coldspa SSR: skipped (strategy="client") --></cfoutput>
-    <cfelseif len(ssrError)>
-        <cfoutput><!-- coldspa SSR error: #encodeForHTML(ssrError)# --></cfoutput>
-    <cfelseif not len(ssrHtml)>
-        <cfoutput><!-- coldspa SSR: empty html, no error reported (renderer may not implement ssrRender) --></cfoutput>
-    <cfelse>
-        <cfoutput><!-- coldspa SSR: ok (#len(ssrHtml)# bytes, #len(ssrCss)# css bytes) --></cfoutput>
-    </cfif>
-</cfif>
-
-<!--- Inline scoped/component CSS (dev) so styles are present pre-hydration. --->
-<cfif len(ssrCss)>
-    <cfoutput><style data-coldspa-ssr="#mountId#">#ssrCss#</style></cfoutput>
-</cfif>
-<!--- In prod, link the bundled CSS for the client entry. --->
-<cfloop array="#ssrCssLinks#" index="cssHref">
-    <cfoutput><link rel="stylesheet" href="#cssHref#" data-coldspa-ssr="#mountId#"></cfoutput>
-</cfloop>
-
-<!--- Mount point (contains SSR HTML if available, for hydration) --->
-<div id="<cfoutput>#mountId#</cfoutput>" data-coldspa-island="<cfoutput>#attributes.framework.name#</cfoutput>"><cfoutput>#ssrHtml#</cfoutput></div>
-
-<cfoutput>
-<cfswitch expression="#attributes.strategy#">
-    <cfcase value="load,client" delimiters=",">
+<!--- Build markup. We're in the END pass so we must write into a buffer
+     and assign it back to thisTag.generatedContent rather than emitting
+     directly (which would land inside the surrounding <cfoutput>'s output
+     position, but `<cf_Island>...</cf_Island>` itself is the output). --->
+<cfsavecontent variable="islandOutput"><cfoutput><cfif (cfg.debug ?: false)><cfif clientOnly><!-- coldspa SSR: skipped (strategy="client") --><cfelseif len(ssrError)><!-- coldspa SSR error: #encodeForHTML(ssrError)# --><cfelseif not len(ssrHtml)><!-- coldspa SSR: empty html, no error reported --><cfelse><!-- coldspa SSR: ok (#len(ssrHtml)# bytes, #len(ssrCss)# css bytes, #len(slotHtml)# slot bytes) --></cfif></cfif><cfif len(ssrCss)><style data-coldspa-ssr="#mountId#">#ssrCss#</style></cfif><cfloop array="#ssrCssLinks#" index="cssHref"><link rel="stylesheet" href="#cssHref#" data-coldspa-ssr="#mountId#"></cfloop><cfif len(slotHtml)><template id="#slotId#" data-coldspa-slot="#mountId#">#slotHtml#</template></cfif><div id="#mountId#" data-coldspa-island="#attributes.framework.name#">#ssrHtml#</div><cfswitch expression="#attributes.strategy#"><cfcase value="load,client" delimiters=",">
 <script type="module">
 #bootImports#
 #bootBody#
 </script>
-    </cfcase>
-
-    <cfcase value="idle">
+</cfcase><cfcase value="idle">
 <script type="module">
 #bootImports#
 const __boot_#jsId# = async () => {
@@ -201,9 +168,7 @@ if ('requestIdleCallback' in window) {
     setTimeout(__boot_#jsId#, 200);
 }
 </script>
-    </cfcase>
-
-    <cfcase value="visible">
+</cfcase><cfcase value="visible">
 <script type="module">
 #bootImports#
 const __boot_#jsId# = async () => {
@@ -225,6 +190,6 @@ if (__el_#jsId# && 'IntersectionObserver' in window) {
     __boot_#jsId#();
 }
 </script>
-    </cfcase>
-</cfswitch>
-</cfoutput>
+</cfcase></cfswitch></cfoutput></cfsavecontent>
+
+<cfset thisTag.generatedContent = islandOutput>

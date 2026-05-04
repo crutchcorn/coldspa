@@ -12,12 +12,13 @@ Vue = {
      * Returns { html: string, error: string } so Island.cfm can surface
      * diagnostic info in dev mode.
      */
-    "ssrRender": function(componentGlobKey, props) {
+    "ssrRender": function(componentGlobKey, props, slotHtml) {
         var ssrUrl = (application.coldspaConfig.ssrUrl ?: "http://127.0.0.1:5174")
                      & "/render/vue";
         var payload = serializeJSON({
             "componentPath": arguments.componentGlobKey,
-            "props": arguments.props
+            "props":         arguments.props,
+            "slotHtml":      arguments.slotHtml ?: ""
         });
         try {
             cfhttp(url=ssrUrl, method="POST", timeout=5, result="local.resp") {

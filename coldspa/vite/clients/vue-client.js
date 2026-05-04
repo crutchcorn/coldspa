@@ -3,7 +3,12 @@
 //
 // `options.strategy === 'client'` -> createApp    (fresh client render)
 // otherwise                        -> createSSRApp (hydrates SSR markup)
-import { createApp, createSSRApp } from 'vue';
+//
+// `options.hasSlot` + `options.slotId` -> read raw HTML from a sibling
+// <template id="slotId"> and inject it as the component's default slot via
+// createStaticVNode. The same path runs server-side (vue-ssr.js) so SSR
+// markup matches the client render byte-for-byte.
+import { createApp, createSSRApp, h, createStaticVNode } from 'vue';
 
 const components = import.meta.glob('__COLDSPA_GLOB__');
 
@@ -18,6 +23,18 @@ export async function mount(componentPath, el, props, options) {
         return;
     }
     const mod = await loader();
+
+    let slots;
+    if (options && options.hasSlot && options.slotId) {
+        const tpl = document.getElementById(options.slotId);
+        const slotHtml = tpl ? tpl.innerHTML : '';
+        if (slotHtml) {
+            slots = { default: () => createStaticVNode(slotHtml, 1) };
+        }
+    }
+
     const factory = options && options.strategy === 'client' ? createApp : createSSRApp;
-    factory(mod.default, props).mount(el);
+    factory({
+        render: () => h(mod.default, props, slots)
+    }).mount(el);
 }

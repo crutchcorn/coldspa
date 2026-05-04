@@ -3,6 +3,10 @@
 //
 // `options.strategy === 'client'` -> createRoot   (fresh client render)
 // otherwise                        -> hydrateRoot (hydrates SSR markup)
+//
+// `options.hasSlot` + `options.slotId` -> read raw HTML from <template id=...>
+// and pass it as `children` via dangerouslySetInnerHTML so the component can
+// render the CF-emitted slot HTML.
 import React from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
@@ -19,7 +23,20 @@ export async function mount(componentPath, el, props, options) {
         return;
     }
     const mod = await loader();
-    const node = React.createElement(mod.default, props);
+
+    let children;
+    if (options && options.hasSlot && options.slotId) {
+        const tpl = document.getElementById(options.slotId);
+        const slotHtml = tpl ? tpl.innerHTML : '';
+        if (slotHtml) {
+            // Wrapper span so the component can decide where children go.
+            children = React.createElement('span', {
+                dangerouslySetInnerHTML: { __html: slotHtml }
+            });
+        }
+    }
+
+    const node = React.createElement(mod.default, props, children);
     if (options && options.strategy === 'client') {
         createRoot(el).render(node);
     } else {
