@@ -8,10 +8,11 @@ export default defineConfig({
 		starlight({
 			title: 'Coldspa',
 			logo: {
-				src: "./public/bathtub.png",
-				alt: "A bathtub emoji",
+				src: "./public/favicon.svg",
+				alt: "A bathtub made out of an iceburg",
 			},
-			favicon: "./public/bathtub.png",
+			favicon: "/favicon.svg",
+			customCss: ["./src/styles/theme.css"],
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/crutchcorn/coldspa' }],
 			sidebar: [
 				{
