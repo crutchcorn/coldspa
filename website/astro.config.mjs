@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import cfc from "./src/syntax/cfc.tmLanguage.json" with { type: "json" };
 import cfml from "./src/syntax/cfml.tmLanguage.json" with { type: "json" };
 import { bundledLanguages } from "shiki/langs";
 
@@ -15,10 +16,13 @@ export default defineConfig({
 			},
 			favicon: "/favicon.svg",
 			customCss: ["./src/styles/theme.css"],
-			expressiveCode: {
+				expressiveCode: {
 				shiki: {
 					// @ts-expect-error Some issue with JSON
-					langs: [{ ...cfml, name: "cfml", displayName: "ColdFusion" }]
+					langs: [
+						{ ...cfml, name: "cfml", displayName: "ColdFusion" },
+						{ ...cfc, name: "cfc", displayName: "ColdFusion Component" },
+					]
 				},
 			},
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/crutchcorn/coldspa' }],
