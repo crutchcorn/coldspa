@@ -2,9 +2,9 @@
 <h1>Coldspa</h1>
 
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/crutchcorn/tempblot/refs/heads/main/website/public/coldspa_dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/crutchcorn/tempblot/refs/heads/main/website/public/coldspa_light.png">
-    <img height="80" width="80" alt="splatter" src="https://raw.githubusercontent.com/crutchcorn/tempblot/refs/heads/main/website/public/favicon.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/crutchcorn/coldspa/refs/heads/main/website/public/coldspa_dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/crutchcorn/coldspa/refs/heads/main/website/public/coldspa_light.png">
+    <img height="80" width="80" alt="splatter" src="https://raw.githubusercontent.com/crutchcorn/coldspa/refs/heads/main/website/public/favicon.svg">
 </picture>
 
 <p>Give your CFML a spa day. The Islands Architecture for ColdFusion.</p>
