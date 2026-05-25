@@ -1,14 +1,11 @@
 <div align="center">
 <h1>Coldspa</h1>
 
-<a href="https://emojipedia.org/joypixels/2.0/bathtub">
-  <img
-    height="80"
-    width="80"
-    alt="bathtub"
-    src="https://raw.githubusercontent.com/crutchcorn/coldspa/refs/heads/main/media/bathtub.png"
-  />
-</a>
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/crutchcorn/tempblot/refs/heads/main/website/public/coldspa_dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/crutchcorn/tempblot/refs/heads/main/website/public/coldspa_light.png">
+    <img height="80" width="80" alt="splatter" src="https://raw.githubusercontent.com/crutchcorn/tempblot/refs/heads/main/website/public/favicon.svg">
+</picture>
 
 <p>Give your CFML a spa day. The Islands Architecture for ColdFusion.</p>
 
