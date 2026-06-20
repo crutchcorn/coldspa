@@ -170,6 +170,7 @@ export default function coldspa(options = {}) {
     const outDir     = options.outDir     ?? 'dist';
     const baseProd   = options.base       ?? '/dist/';
     const userGlobs  = options.globs      ?? {};
+    const usesReact  = frameworks.includes('react');
 
     for (const fw of frameworks) {
         if (!(fw in FRAMEWORK_CLIENTS)) {
@@ -209,8 +210,18 @@ export default function coldspa(options = {}) {
             name: 'coldspa',
 
             config(_userConfig, { command }) {
+                const sharedConfig = usesReact ? {
+                    resolve: {
+                        dedupe: ['react', 'react-dom']
+                    },
+                    esbuild: {
+                        jsx: 'automatic'
+                    }
+                } : {};
+
                 if (isSsrBuild) {
                     return {
+                        ...sharedConfig,
                         // SSR builds don't need a public base path; output is
                         // consumed by Node, not the browser.
                         build: {
@@ -232,6 +243,7 @@ export default function coldspa(options = {}) {
                     };
                 }
                 return {
+                    ...sharedConfig,
                     base: command === 'build' ? baseProd : '/',
                     server: serverConfig(vitePort, _userConfig.root || process.cwd()),
                     // Exclude our client entries from Vite's dep pre-scan.
