@@ -6,3 +6,4 @@ dist/
 dist-ssr/
 coldspa.config.json
 modules/
+.DS_Store
