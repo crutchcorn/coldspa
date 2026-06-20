@@ -108,7 +108,7 @@ The Coldspa plugin handles client-entry shims, manifest output, and dev-server h
         "dev":      "vite",
         "ssr":      "coldspa-ssr",
         "build":    "vite build && cross-env COLDSPA_SSR=1 vite build",
-        "ssr:prod": "cross-env NODE_ENV=production coldspa-ssr"
+        "ssr:prod": "coldspa-ssr --prod"
     }
 }
 ```

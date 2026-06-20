@@ -47,7 +47,7 @@
         "vite:vue": "vite --config vite.config.vue.js",
         "vite:react": "vite --config vite.config.react.js",
         "ssr": "node coldspa/vite/ssr-server.js",
-        "ssr:prod": "cross-env NODE_ENV=production node coldspa/vite/ssr-server.js",
+        "ssr:prod": "node coldspa/vite/ssr-server.js --prod",
         "build": "vite build && cross-env COLDSPA_SSR=1 vite build",
         "build:client": "vite build",
         "build:ssr": "cross-env COLDSPA_SSR=1 vite build",

@@ -22,10 +22,17 @@
 //   COLDSPA_SSR_PORT   default 5174
 //   COLDSPA_SSR_HOST   default 0.0.0.0
 //   NODE_ENV           'production' switches to prod mode
+//
+// Flags:
+//   --prod             switches to prod mode
 
 import { createServer as createHttpServer } from 'http';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, resolve } from 'path';
+
+if (process.argv.includes('--prod')) {
+    process.env.NODE_ENV = 'production';
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(process.cwd());
