@@ -41,9 +41,18 @@ function normalizeViteId(id) {
     return cleanId.startsWith('/@fs/') ? cleanId.slice('/@fs/'.length) : cleanId;
 }
 
+function toViteFsId(path) {
+    return `/@fs/${path.split('\\').join('/')}`;
+}
+
 const FRAMEWORK_CLIENTS = {
     vue:   toViteId(resolve(__dirname, 'clients/vue-client.js')),
     react: toViteId(resolve(__dirname, 'clients/react-client.js'))
+};
+
+const FRAMEWORK_CLIENT_URLS = {
+    '/coldspa/vite/clients/vue-client.js': FRAMEWORK_CLIENTS.vue,
+    '/coldspa/vite/clients/react-client.js': FRAMEWORK_CLIENTS.react
 };
 
 // SSR entries -- one per framework that supports server rendering.
@@ -239,6 +248,17 @@ export default function coldspa(options = {}) {
                         }
                     }
                 };
+            },
+
+            configureServer(server) {
+                server.middlewares.use((req, _res, next) => {
+                    const parsed = new URL(req.url || '/', 'http://coldspa.local');
+                    const clientPath = FRAMEWORK_CLIENT_URLS[parsed.pathname];
+                    if (clientPath) {
+                        req.url = `${toViteFsId(clientPath)}${parsed.search}`;
+                    }
+                    next();
+                });
             },
 
             // Replace the glob placeholder in our client entries with the
