@@ -1,23 +1,34 @@
 // Coldspa Vite plugin.
 //
 // Encapsulates everything Vite needs to support cf_Island:
-//   - Loads framework sub-plugins (@vitejs/plugin-vue, @vitejs/plugin-react)
 //   - Registers the matching client-entry shims as build inputs
 //   - Sets manifest output, base path, dev server port/CORS for the CF integration
 //   - Forces preserveEntrySignatures so the entry chunks aren't tree-shaken away
 //   - Substitutes the user's component glob into the client entries at transform time
 //
 // Usage (simple):
-//   coldspa({ frameworks: ['vue'] })
+//   import vue from '@vitejs/plugin-vue';
+//
+//   plugins: [
+//     vue(),
+//     coldspa({ frameworks: ['vue'] })
+//   ]
 //
 // Usage (custom component locations):
-//   coldspa({
-//     frameworks: ['vue', 'react'],
-//     globs: {
-//       vue:   '/app/**/*.vue',
-//       react: ['/app/**/*.jsx', '/app/**/*.tsx']
-//     }
-//   })
+//   import vue from '@vitejs/plugin-vue';
+//   import react from '@vitejs/plugin-react';
+//
+//   plugins: [
+//     vue(),
+//     react(),
+//     coldspa({
+//       frameworks: ['vue', 'react'],
+//       globs: {
+//         vue:   '/app/**/*.vue',
+//         react: ['/app/**/*.jsx', '/app/**/*.tsx']
+//       }
+//     })
+//   ]
 //
 // Options:
 //   frameworks   string[]                    default ['vue']
@@ -75,21 +86,6 @@ const DEFAULT_GLOBS = {
 };
 
 const GLOB_PLACEHOLDER = '__COLDSPA_GLOB__';
-
-async function loadFrameworkPlugin(name) {
-    switch (name) {
-        case 'vue': {
-            const mod = await import('@vitejs/plugin-vue');
-            return mod.default();
-        }
-        case 'react': {
-            const mod = await import('@vitejs/plugin-react');
-            return mod.default();
-        }
-        default:
-            throw new Error(`[coldspa] Unknown framework "${name}". Supported: vue, react.`);
-    }
-}
 
 // Renders a glob option as the literal source text of an import.meta.glob argument:
 //   "/src/**/*.vue"           -> '/src/**/*.vue'
@@ -208,10 +204,7 @@ export default function coldspa(options = {}) {
     // unhashed flat files into dist-ssr/ so the Node sidecar can require them.
     const isSsrBuild = process.env.COLDSPA_SSR === '1';
 
-    const subPluginsPromise = Promise.all(frameworks.map(loadFrameworkPlugin));
-
     return [
-        subPluginsPromise.then(plugins => plugins),
         {
             name: 'coldspa',
 

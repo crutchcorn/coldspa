@@ -82,7 +82,7 @@ CF custom tag resolution. `<cf_Island>` requires a file literally named `Island.
    └──────────────────────────────────────┘
                       ▲
                       │ Vite plugin (coldspa/vite/plugin.js)
-                      │ owns: framework sub-plugins, client-entry shims,
+                      │ owns: client-entry shims,
                       │       manifest, allowed hosts, hmr.host
                       ▼
                 Vite dev server (or built dist/)
@@ -96,7 +96,7 @@ CF custom tag resolution. `<cf_Island>` requires a file literally named `Island.
 
 2. **One bootstrap entry point.** All CFML-side side effects (config, process spawn, reload hooks) live in [coldspa/Bootstrap.cfc](coldspa/Bootstrap.cfc). `Application.cfc` (consumers') and `ModuleConfig.cfc` (ColdBox) should only *delegate* to it. Don't fork the logic.
 
-3. **Optional peer deps.** Every framework package (`vue`, `react`, `react-dom`, `@vitejs/plugin-vue`, `@vitejs/plugin-react`) is declared as an *optional* peer dependency. The Vite plugin and SSR sidecar must `await import(...)` them lazily and only fail when the consumer actually opts into that framework.
+3. **Optional peer deps.** Runtime framework packages (`vue`, `react`, `react-dom`) are declared as *optional* peer dependencies. The Vite plugin must not auto-import `@vitejs/plugin-vue` or `@vitejs/plugin-react`; consumers import and configure those in their own Vite configs. The SSR sidecar must `await import(...)` runtime framework packages lazily and only fail when the consumer actually opts into that framework.
 
 4. **No Node inside the CF container.** Common Docker setup: CF in one container, Node in another (or on the host). `ProcessManager` probes for `npm` on PATH and silently skips spawning if it's missing, so `Bootstrap.onApplicationStart` is safe to call inside the CF container. The escape hatch for supervised setups is `COLDSPA_NO_BOOTSTRAP=1`. See [docs/docker.md](docs/docker.md).
 

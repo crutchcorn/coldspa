@@ -68,17 +68,21 @@ ColdBox users can skip this — the bundled `ModuleConfig.cfc` registers the cus
 ```js
 // vite.config.js
 import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
 import coldspa from 'coldspa/vite';
 
 export default defineConfig({
     plugins: [
+        vue(),
         coldspa({
-            frameworks: ['vue'],            // or ['vue', 'react']
+            frameworks: ['vue'],
             globs: { vue: '/src/**/*.vue' } // where your components live
         })
     ]
 });
 ```
+
+Use the normal framework Vite plugin for every framework you enable. For React, install and add `@vitejs/plugin-react`; for mixed Vue + React configs, include both `vue()` and `react()` before `coldspa(...)`.
 
 ## Use it from CFML
 
@@ -108,4 +112,3 @@ That's it — start your CF server and load the page. `coldspa.Bootstrap` auto-s
 - [Slots](docs/slots.md) — default + named slots, `cf_Slot`, gotchas
 - [Configuration](docs/configuration.md) — `coldspa.config.json`, env vars
 - [Docker & cross-host setups](docs/docker.md) — running CF and Vite on different hosts
-
