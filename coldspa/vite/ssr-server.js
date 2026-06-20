@@ -25,6 +25,7 @@
 //
 // Flags:
 //   --prod             switches to prod mode
+//   --force            passes Vite's dependency optimizer force option in dev
 
 import { createServer as createHttpServer } from 'http';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -33,6 +34,8 @@ import { dirname, resolve } from 'path';
 if (process.argv.includes('--prod')) {
     process.env.NODE_ENV = 'production';
 }
+
+const FORCE_OPTIMIZE_DEPS = process.argv.includes('--force');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(process.cwd());
@@ -73,6 +76,7 @@ async function getRenderer(framework) {
         viteDevServer = await createServer({
             root: PROJECT_ROOT,
             server: { middlewareMode: true },
+            optimizeDeps: FORCE_OPTIMIZE_DEPS ? { force: true } : undefined,
             appType: 'custom'
         });
     }

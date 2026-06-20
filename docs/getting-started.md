@@ -115,6 +115,8 @@ The Coldspa plugin handles client-entry shims, manifest output, and dev-server h
 
 `coldspa-ssr` is the SSR sidecar binary shipped in the npm package. Keeping it behind an `ssr` script lets `coldspa.Bootstrap` start the sidecar automatically with `npm run ssr`.
 
+If Vite's dependency optimizer cache needs to be rebuilt during development, run the sidecar with `coldspa-ssr --force` or `npm run ssr -- --force`.
+
 ## 6. Configure runtime URLs (optional)
 
 For local single-host dev, the defaults are fine. Otherwise create a `coldspa.config.json` at the webroot:
