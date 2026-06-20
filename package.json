@@ -1,6 +1,6 @@
 {
     "name": "coldspa",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "description": "Give your CFML a spa day. The Islands Architecture for ColdFusion.",
     "type": "module",
     "license": "MIT",
