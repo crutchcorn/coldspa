@@ -106,14 +106,14 @@ The Coldspa plugin handles client-entry shims, manifest output, and dev-server h
 {
     "scripts": {
         "dev":      "vite",
-        "ssr":      "node node_modules/coldspa/coldspa/vite/ssr-server.js",
+        "ssr":      "coldspa-ssr",
         "build":    "vite build && cross-env COLDSPA_SSR=1 vite build",
-        "ssr:prod": "cross-env NODE_ENV=production node node_modules/coldspa/coldspa/vite/ssr-server.js"
+        "ssr:prod": "cross-env NODE_ENV=production coldspa-ssr"
     }
 }
 ```
 
-The `ssr` script can also be invoked via the `coldspa-ssr` bin shipped in the npm package.
+`coldspa-ssr` is the SSR sidecar binary shipped in the npm package. Keeping it behind an `ssr` script lets `coldspa.Bootstrap` start the sidecar automatically with `npm run ssr`.
 
 ## 6. Configure runtime URLs (optional)
 
