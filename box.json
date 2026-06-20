@@ -1,7 +1,7 @@
 {
     "name":"Coldspa",
     "slug":"coldspa",
-    "version":"0.3.0",
+    "version":"0.4.0",
     "author":"crutchcorn",
     "location":"ForgeboxStorage",
     "private":false,
