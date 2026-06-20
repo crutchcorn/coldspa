@@ -68,34 +68,37 @@ Logs from the spawned processes land in `WEB-INF/coldspa-logs/{vite,ssr,manager}
 Coldspa uses Vite for asset bundling and a small Node sidecar for server-side rendering.
 
 ```bash
-npm install coldspa vite vue           # Vue
+npm install coldspa vite vue @vitejs/plugin-vue           # Vue
 # or
 npm install coldspa vite react react-dom @vitejs/plugin-react   # React
 ```
 
-Coldspa lists every framework package as an **optional peer dependency**, so you only install what you actually use.
+Coldspa lists every runtime framework package as an **optional peer dependency**, so you only install what you actually use. Install the matching Vite framework plugin in your app because your Vite config owns that setup.
 
 ## 4. Configure Vite
 
 ```js
 // vite.config.js
 import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
 import coldspa from 'coldspa/vite';
 
 export default defineConfig({
     plugins: [
+        vue(),
         coldspa({
-            frameworks: ['vue'],            // or ['vue', 'react']
+            frameworks: ['vue'],
             globs: {
-                vue:   '/src/**/*.vue',
-                react: '/src/**/*.{jsx,tsx}'
+                vue: '/src/**/*.vue'
             }
         })
     ]
 });
 ```
 
-The plugin handles framework sub-plugins, client-entry shims, manifest output, and dev-server host binding for you.
+For React, import `react` from `@vitejs/plugin-react`, add `react()` to `plugins`, and set `frameworks: ['react']`. For mixed Vue + React configs, include both framework plugins before `coldspa(...)`.
+
+The Coldspa plugin handles client-entry shims, manifest output, and dev-server host binding for you.
 
 ## 5. Add `package.json` scripts
 
@@ -103,14 +106,16 @@ The plugin handles framework sub-plugins, client-entry shims, manifest output, a
 {
     "scripts": {
         "dev":      "vite",
-        "ssr":      "node node_modules/coldspa/coldspa/vite/ssr-server.js",
+        "ssr":      "coldspa-ssr",
         "build":    "vite build && cross-env COLDSPA_SSR=1 vite build",
-        "ssr:prod": "cross-env NODE_ENV=production node node_modules/coldspa/coldspa/vite/ssr-server.js"
+        "ssr:prod": "coldspa-ssr --prod"
     }
 }
 ```
 
-The `ssr` script can also be invoked via the `coldspa-ssr` bin shipped in the npm package.
+`coldspa-ssr` is the SSR sidecar binary shipped in the npm package. Keeping it behind an `ssr` script lets `coldspa.Bootstrap` start the sidecar automatically with `npm run ssr`.
+
+If Vite's dependency optimizer cache needs to be rebuilt during development, run the sidecar with `coldspa-ssr --force` or `npm run ssr -- --force`.
 
 ## 6. Configure runtime URLs (optional)
 

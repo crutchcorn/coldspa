@@ -1,23 +1,34 @@
 // Coldspa Vite plugin.
 //
 // Encapsulates everything Vite needs to support cf_Island:
-//   - Loads framework sub-plugins (@vitejs/plugin-vue, @vitejs/plugin-react)
 //   - Registers the matching client-entry shims as build inputs
 //   - Sets manifest output, base path, dev server port/CORS for the CF integration
 //   - Forces preserveEntrySignatures so the entry chunks aren't tree-shaken away
 //   - Substitutes the user's component glob into the client entries at transform time
 //
 // Usage (simple):
-//   coldspa({ frameworks: ['vue'] })
+//   import vue from '@vitejs/plugin-vue';
+//
+//   plugins: [
+//     vue(),
+//     coldspa({ frameworks: ['vue'] })
+//   ]
 //
 // Usage (custom component locations):
-//   coldspa({
-//     frameworks: ['vue', 'react'],
-//     globs: {
-//       vue:   '/app/**/*.vue',
-//       react: ['/app/**/*.jsx', '/app/**/*.tsx']
-//     }
-//   })
+//   import vue from '@vitejs/plugin-vue';
+//   import react from '@vitejs/plugin-react';
+//
+//   plugins: [
+//     vue(),
+//     react(),
+//     coldspa({
+//       frameworks: ['vue', 'react'],
+//       globs: {
+//         vue:   '/app/**/*.vue',
+//         react: ['/app/**/*.jsx', '/app/**/*.tsx']
+//       }
+//     })
+//   ]
 //
 // Options:
 //   frameworks   string[]                    default ['vue']
@@ -41,19 +52,27 @@ function normalizeViteId(id) {
     return cleanId.startsWith('/@fs/') ? cleanId.slice('/@fs/'.length) : cleanId;
 }
 
-function toViteFsId(path) {
-    return `/@fs/${path.split('\\').join('/')}`;
-}
-
 const FRAMEWORK_CLIENTS = {
     vue:   toViteId(resolve(__dirname, 'clients/vue-client.js')),
     react: toViteId(resolve(__dirname, 'clients/react-client.js'))
 };
 
-const FRAMEWORK_CLIENT_URLS = {
-    '/coldspa/vite/clients/vue-client.js': FRAMEWORK_CLIENTS.vue,
-    '/coldspa/vite/clients/react-client.js': FRAMEWORK_CLIENTS.react
+const FRAMEWORK_CLIENT_MODULES = {
+    '/coldspa/vite/clients/vue-client.js': {
+        framework: 'vue',
+        path: FRAMEWORK_CLIENTS.vue,
+        virtualId: '\0coldspa:vue-client'
+    },
+    '/coldspa/vite/clients/react-client.js': {
+        framework: 'react',
+        path: FRAMEWORK_CLIENTS.react,
+        virtualId: '\0coldspa:react-client'
+    }
 };
+
+const VIRTUAL_CLIENT_MODULES = Object.fromEntries(
+    Object.values(FRAMEWORK_CLIENT_MODULES).map((entry) => [entry.virtualId, entry])
+);
 
 // SSR entries -- one per framework that supports server rendering.
 const FRAMEWORK_SSR = {
@@ -67,21 +86,6 @@ const DEFAULT_GLOBS = {
 };
 
 const GLOB_PLACEHOLDER = '__COLDSPA_GLOB__';
-
-async function loadFrameworkPlugin(name) {
-    switch (name) {
-        case 'vue': {
-            const mod = await import('@vitejs/plugin-vue');
-            return mod.default();
-        }
-        case 'react': {
-            const mod = await import('@vitejs/plugin-react');
-            return mod.default();
-        }
-        default:
-            throw new Error(`[coldspa] Unknown framework "${name}". Supported: vue, react.`);
-    }
-}
 
 // Renders a glob option as the literal source text of an import.meta.glob argument:
 //   "/src/**/*.vue"           -> '/src/**/*.vue'
@@ -166,6 +170,7 @@ export default function coldspa(options = {}) {
     const outDir     = options.outDir     ?? 'dist';
     const baseProd   = options.base       ?? '/dist/';
     const userGlobs  = options.globs      ?? {};
+    const usesReact  = frameworks.includes('react');
 
     for (const fw of frameworks) {
         if (!(fw in FRAMEWORK_CLIENTS)) {
@@ -183,6 +188,11 @@ export default function coldspa(options = {}) {
         input[`${fw}-client`] = clientPath;
         globsByClientPath[clientPath] = userGlobs[fw] ?? DEFAULT_GLOBS[fw];
 
+        const virtualClient = Object.values(FRAMEWORK_CLIENT_MODULES).find((entry) => entry.framework === fw);
+        if (virtualClient) {
+            globsByClientPath[virtualClient.virtualId] = userGlobs[fw] ?? DEFAULT_GLOBS[fw];
+        }
+
         // SSR entry (if framework supports it). Same glob applies.
         if (FRAMEWORK_SSR[fw]) {
             const ssrPath = FRAMEWORK_SSR[fw];
@@ -195,16 +205,23 @@ export default function coldspa(options = {}) {
     // unhashed flat files into dist-ssr/ so the Node sidecar can require them.
     const isSsrBuild = process.env.COLDSPA_SSR === '1';
 
-    const subPluginsPromise = Promise.all(frameworks.map(loadFrameworkPlugin));
-
     return [
-        subPluginsPromise.then(plugins => plugins),
         {
             name: 'coldspa',
 
             config(_userConfig, { command }) {
+                const sharedConfig = usesReact ? {
+                    resolve: {
+                        dedupe: ['react', 'react-dom']
+                    },
+                    esbuild: {
+                        jsx: 'automatic'
+                    }
+                } : {};
+
                 if (isSsrBuild) {
                     return {
+                        ...sharedConfig,
                         // SSR builds don't need a public base path; output is
                         // consumed by Node, not the browser.
                         build: {
@@ -226,6 +243,7 @@ export default function coldspa(options = {}) {
                     };
                 }
                 return {
+                    ...sharedConfig,
                     base: command === 'build' ? baseProd : '/',
                     server: serverConfig(vitePort, _userConfig.root || process.cwd()),
                     // Exclude our client entries from Vite's dep pre-scan.
@@ -234,6 +252,11 @@ export default function coldspa(options = {}) {
                     // placeholder and bails. These files are entry points
                     // anyway -- they don't belong in the optimized deps cache.
                     optimizeDeps: {
+                        include: frameworks.flatMap((fw) => {
+                            if (fw === 'react') return ['react', 'react-dom', 'react-dom/client'];
+                            if (fw === 'vue') return ['vue'];
+                            return [];
+                        }),
                         entries: [],
                         exclude: Object.values(FRAMEWORK_CLIENTS).concat(
                             Object.values(FRAMEWORK_SSR)
@@ -250,15 +273,15 @@ export default function coldspa(options = {}) {
                 };
             },
 
-            configureServer(server) {
-                server.middlewares.use((req, _res, next) => {
-                    const parsed = new URL(req.url || '/', 'http://coldspa.local');
-                    const clientPath = FRAMEWORK_CLIENT_URLS[parsed.pathname];
-                    if (clientPath) {
-                        req.url = `${toViteFsId(clientPath)}${parsed.search}`;
-                    }
-                    next();
-                });
+            resolveId(id) {
+                const cleanId = id.split('?')[0];
+                const entry = FRAMEWORK_CLIENT_MODULES[cleanId];
+                return entry ? entry.virtualId : null;
+            },
+
+            load(id) {
+                const entry = VIRTUAL_CLIENT_MODULES[id];
+                return entry ? readFileSync(entry.path, 'utf8') : null;
             },
 
             // Replace the glob placeholder in our client entries with the
