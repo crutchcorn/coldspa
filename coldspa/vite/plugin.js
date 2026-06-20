@@ -36,6 +36,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // here so our id-based lookups work on Windows.
 const toViteId = (p) => resolve(p).split('\\').join('/');
 
+function normalizeViteId(id) {
+    const cleanId = id.split('?')[0];
+    return cleanId.startsWith('/@fs/') ? cleanId.slice('/@fs/'.length) : cleanId;
+}
+
 const FRAMEWORK_CLIENTS = {
     vue:   toViteId(resolve(__dirname, 'clients/vue-client.js')),
     react: toViteId(resolve(__dirname, 'clients/react-client.js'))
@@ -242,8 +247,8 @@ export default function coldspa(options = {}) {
             // import map).
             enforce: 'pre',
             transform(code, id) {
-                // id may include a query string (?import, ?used, etc); strip it
-                const cleanId = id.split('?')[0];
+                // id may include a query string or Vite's /@fs/ prefix.
+                const cleanId = normalizeViteId(id);
                 const glob = globsByClientPath[cleanId];
                 if (!glob) return null;
                 if (!code.includes(GLOB_PLACEHOLDER)) return null;
@@ -260,4 +265,3 @@ export default function coldspa(options = {}) {
         }
     ];
 }
-
