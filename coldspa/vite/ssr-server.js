@@ -28,15 +28,19 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, resolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = resolve(__dirname, '..', '..'); // webroot
+const PROJECT_ROOT = resolve(process.cwd());
 const PORT = Number(process.env.COLDSPA_SSR_PORT || 5174);
 const HOST = process.env.COLDSPA_SSR_HOST || '0.0.0.0';
 const IS_PROD = process.env.NODE_ENV === 'production';
 
+function toViteFsId(path) {
+    return `/@fs/${path.split('\\').join('/')}`;
+}
+
 // Map :framework path segment -> SSR module entry path / id
 const SSR_ENTRIES_DEV = {
-    vue:   '/coldspa/vite/clients/vue-ssr.js',
-    react: '/coldspa/vite/clients/react-ssr.js'
+    vue:   toViteFsId(resolve(__dirname, 'clients/vue-ssr.js')),
+    react: toViteFsId(resolve(__dirname, 'clients/react-ssr.js'))
 };
 const SSR_ENTRIES_PROD = {
     vue:   resolve(PROJECT_ROOT, 'dist-ssr', 'vue-ssr.js'),
